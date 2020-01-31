@@ -45,9 +45,10 @@ def read_request(request):
     Return data from request object.  Returns result or "" if the read
     fails..
     '''
-
+    #Changed this function to encode using utf-8
+    #because of special characters on Strava website
     try:
-        return request.text.encode('iso-8859-1')
+        return request.text.encode('utf-8')
     except Exception:
         print("read failed: " + request.url)
         return ""
