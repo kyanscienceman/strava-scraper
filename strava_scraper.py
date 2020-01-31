@@ -56,14 +56,16 @@ def go():
                 attr_dict['Gender'] = a.find("td", class_="athlete-gender").text
                 attr_dict['Age'] = a.find("td", class_="athlete-age").text
                 attr_dict['Time1'] = a.find("td", class_="finish-time").text
-                a_url = a.find("td", class_="athlete-activity").find(href=True)["href"]
-                a_url = urlutil.convert_if_relative_url(page_url, a_url)
+                activity_url = a.find("td", class_="athlete-activity").find(href=True)["href"]
+                activity_url = urlutil.convert_if_relative_url(page_url, activity_url)
 
                 #Write all of this information to the output CSV file
-                activity_to_csv(a_url, attr_dict)
+                scrape_activity(activity_url, attr_dict)
+
+            page_num += 1
 
 
-def activity_to_csv(activity_url, attribute_dict):
+def scrape_activity(activity_url, attribute_dict):
     '''
     Scrapes a Strava activity page for running data
     
@@ -80,13 +82,20 @@ def activity_to_csv(activity_url, attribute_dict):
     stats = soup.find("ul", class_="Stats--list-stats--2i0Jd Summary--stats-wrapper--214Kq")
 
     distance = stats[0].find("span").text
-    attribute_dict['Distance'] = re.search(r"(\d+\.\d+) ", distance)
+    attribute_dict['Distance'] = re.findall(r"(\d+\.\d+) ", distance)[0]
 
     time2 = stats[1].find("div", class_="Stat--stat-value--3bMEZ ")
     attribute_dict['Time2'] = time2
 
     with open("strava.csv", 'a') as csvfile:
-        writer = csv.DictWriter(csvfile, delimiter='|')
-        writer.writerow(attribute_dict)
+    	fieldnames = ["Name", "Gender", "Age", "Distance", "Time1", "Time2"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='|')
+        
+        writer.writeheader()
+
+        for i in XXXX:
+        	writer.writerow({"Name": attr_dict['Name'], "Gender": attr_dict['Gender']\
+        		"Age": attr_dict['Age'], "Distance": attribute_dict['Distance'], \
+        		"Time1": attr_dict['Time1'], "Time2":attribute_dict['Time2']})
         
 go()
