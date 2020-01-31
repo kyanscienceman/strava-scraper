@@ -18,6 +18,7 @@ def scrape_a_page(url):
     soup = bs4.BeautifulSoup(text, features='lxml')
     name_tags = soup.find_all('h4', class_="list-field type-fullname")
     names = [nametag.text for nametag in name_tags] 
+    print(names)
     # here the names is in the format "Lastname, Firstname (NATIONALITY)"
     
     age_class_tags = soup.find_all('div', class_="list-field type-age_class")
@@ -27,6 +28,7 @@ def scrape_a_page(url):
         age_class_text = age_class_tag.text
         age_class = re.search('\d(.*)', age_class_text).group()
         age_class_lst.append(age_class)
+    print(age_class_lst)
     # age_class_lst is a list of age class, where each age class is of the form '35-39'
 
     "visible-xs-block visible-sm-block list-label"
@@ -37,6 +39,7 @@ def scrape_a_page(url):
         time_text = time_tag.text
         time = re.search('\d(.*)', time_text).group()
         time_lst.append(time)
+    print(time_lst)
     # time_lst is a list of finish time
 
     # All of the above lists are in order
