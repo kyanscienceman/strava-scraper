@@ -6,6 +6,7 @@ import sys
 import bs4
 import re
 import urlutil
+import csv
 
 def go():
     '''
@@ -25,6 +26,12 @@ def go():
     For the time being, let's hard code the JSON file as a Python dictionary.'''
     marathon_homepages = {'https://www.strava.com/running_races/2782/results?page={}': ('2019-13-10', 'Chicago')}
 
+    #Set up the CSV file with the header so we can append to it later
+    with open("strava.csv", 'a') as csvfile:
+        fieldnames = ["Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='|')
+        writer.writeheader()
+
     '''Eventually, we will have a big dictionary of starting URLs, and we
     want to scrape the data for the marathon corresponding to each of them.
     Luckily Strava URLs are formatted super neatly, so we can just use 
@@ -37,7 +44,7 @@ def go():
             page_url = url.format(page_num)
             page = urlutil.get_request(page_url)
             page_html = urlutil.read_request(page)
-            soup = bs4.BeautifulSoup(page_html, "html5lib")
+            soup = bs4.BeautifulSoup(page_html, "lxml")
 
             '''On the first page we have an additional task:
             find the last page number that we need to scrape for this marathon.
@@ -53,19 +60,19 @@ def go():
             for a in activities:
                 attr_dict = {}
                 attr_dict['Name'] = a.find("a", class_="minimal").text
-                attr_dict['Gender'] = a.find("td", class_="athlete-gender").text
+                attr_dict['Gender'] = a.find("td", class_="athlete-gender").text.strip()
                 attr_dict['Age'] = a.find("td", class_="athlete-age").text
                 attr_dict['Time1'] = a.find("td", class_="finish-time").text
                 activity_url = a.find("td", class_="athlete-activity").find(href=True)["href"]
                 activity_url = urlutil.convert_if_relative_url(page_url, activity_url)
-
+                print(attr_dict, activity_url)
                 #Write all of this information to the output CSV file
                 scrape_activity(activity_url, attr_dict)
 
             page_num += 1
 
 
-def scrape_activity(activity_url, attribute_dict):
+def scrape_activity(activity_url, attr_dict):
     '''
     Scrapes a Strava activity page for running data
     
@@ -78,24 +85,19 @@ def scrape_activity(activity_url, attribute_dict):
     '''
     activity = urlutil.get_request(activity_url)
     activity_html = urlutil.read_request(activity)
-    soup = bs4.BeautifulSoup(activity_html, "html5lib")
-    stats = soup.find("ul", class_="Stats--list-stats--2i0Jd Summary--stats-wrapper--214Kq")
+    soup = bs4.BeautifulSoup(activity_html, "lxml")
 
-    distance = stats[0].find("span").text
-    attribute_dict['Distance'] = re.findall(r"(\d+\.\d+) ", distance)[0]
+    #Get running time from activity page
+    stats = soup.find("ul", class_="inline-stats section")
+    time2 = stats.find("strong").text
+    attr_dict['Time2'] = time2
 
-    time2 = stats[1].find("div", class_="Stat--stat-value--3bMEZ ")
-    attribute_dict['Time2'] = time2
+    #Get shoes from activity page
+    shoes = soup.find("span", class_="gear-name").text
+    attr_dict['Shoes'] = shoes
 
     with open("strava.csv", 'a') as csvfile:
-    	fieldnames = ["Name", "Gender", "Age", "Distance", "Time1", "Time2"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='|')
-        
-        writer.writeheader()
-
-        for i in XXXX:
-        	writer.writerow({"Name": attr_dict['Name'], "Gender": attr_dict['Gender']\
-        		"Age": attr_dict['Age'], "Distance": attribute_dict['Distance'], \
-        		"Time1": attr_dict['Time1'], "Time2":attribute_dict['Time2']})
+        writer.writerow(attr_dict)
         
 go()
