@@ -27,7 +27,7 @@ def go():
     marathon_homepages = {'https://www.strava.com/running_races/2782/results?page={}': ('2019-13-10', 'Chicago')}
 
     #Set up the CSV file with the header so we can append to it later
-    with open("strava.csv", 'a') as csvfile:
+    with open("strava.csv") as csvfile:
         fieldnames = ["Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='|')
         writer.writeheader()
