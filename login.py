@@ -1,52 +1,78 @@
-# Python code to log into Strava
+# import bs4
+# import requests
+
+# VERSION = '0.1.0'
+
+# # https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/User-Agent
+# USER_AGENT = "stravalib-scraper/%s" % VERSION
+# HEADERS = {'User-Agent': USER_AGENT}
+
+# BASE_URL = "https://www.strava.com"
+# URL_LOGIN = "%s/login" % BASE_URL
+# URL_SESSION = "%s/session" % BASE_URL
+# URL_DASHBOARD = "%s/dashboard" % BASE_URL
+
+# EMAIL = "stravascraper123@gmail.com"
+# PASSWORD = "2hourmarathon"
+# SESSION = requests.Session()
+
+# is_authed = False
+# dashboard_content = None
+
+# def get_page(url):
+#         response = SESSION.get(url, headers=HEADERS)
+#         response.raise_for_status()
+#         return response
+
+# def login():
+#     response = get_page(URL_LOGIN)
+#     soup = bs4.BeautifulSoup(response.content, 'html.parser')
+#     utf8 = soup.find_all('input',{'name': 'utf8'})[0].get('value').encode('utf-8')
+#     token = soup.find_all('input',{'name': 'authenticity_token'})[0].get('value')
+#     data = {'utf8': utf8,
+#             'authenticity_token': token,
+#             'plan': "",
+#             'email': EMAIL,
+#             'password': PASSWORD}
+#     response = SESSION.post(URL_SESSION, data=data, headers=HEADERS)
+#     response.raise_for_status()
+
+#     # Simulate that redirect here:
+#     response = get_page(URL_DASHBOARD)
+#     #assert("<h2>Activity Feed</h2>" in response.content)
+#     is_authed = True
+#     dashboard_content = response.content
+#     print(dashboard_content)
+
+# login()
 
 import requests
-from lxml import html
-import sys
 import bs4
-import re
-import urlutil
-import csv
 
-# session_requests = requests.session()
-
-#email input
-#<input type="email" name="email" id="email" value="" placeholder="Your Email" autofocus="autofocus" class="form-control">
-
-#password input
-#<input type="password" name="password" id="password" value="" placeholder="Password" class="form-control">
-
-#csrf token
-#<meta name="csrf-token" content="l3ge0TbJM9KhInAvxl0iCOI4uOLmzM+1ZiZs5j9y6OQvzuHtFX322osc4ipggMdHuoCuEEC4dpA6dHGcdNz83Q==">
-login_url = "https://www.strava.com/login"
-
-login_page = urlutil.get_request(login_url)
-login = urlutil.read_request(login_page)
-soup = bs4.BeautifulSoup(login, 'html.parser')
-utf8 = soup.find_all('input',
-                     {'name': 'utf8'})[0].get('value').encode('utf-8')
-token = soup.find_all('input',
-                      {'name': 'authenticity_token'})[0].get('value')
-
-payload = {
-    'utf8': utf8,
-    'authenticity_token': token,
-    'plan': "",
-    'email': "stravascraper123@gmail.com",
-    'password': "2hourmarathon",
+url = "https://www.strava.com/login"
+headers = {
+    'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0'
+}
+login_data = {
+    'name': "stravascraper123@mail.com",
+    'pass': "2hourmarathon",
+    'utf8': "",
+    'token': "",
+    'plan': ""
 }
 
-REQUEST_URL = "https://www.strava.com/login/session"
-POST_LOGIN_URL = "https://www.strava.com/"
-with requests.Session() as session:
-    post = session.post(POST_LOGIN_URL, data=payload)
-    r = session.get(REQUEST_URL)
-    print(r.text)
-# activity = urlutil.get_request(POST_LOGIN_URL)
-# activity_html = urlutil.read_request(activity)
-# soup = bs4.BeautifulSoup(activity_html, "lxml")
-# print(soup)
+with requests.Session() as s:
+    r = s.get(url, headers=headers)
+    soup = bs4.BeautifulSoup(r.content, 'lxml')
 
+    utf8 = soup.find("input", attrs={'name': "utf8"}).get('value').encode('utf-8')
+    login_data['utf8'] = utf8
 
+    token = soup.find("input", attrs={'name': "authenticity_token"}).get('value')
+    login_data['token'] = token
 
+    plan = soup.find("input", attrs={'name': "plan"}).get('value')
+    login_data['plan'] = plan
 
+    r = s.post(url, headers=headers, data=login_data)
+    print(r.content)
