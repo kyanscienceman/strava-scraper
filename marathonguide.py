@@ -1,8 +1,47 @@
 # https://stackoverflow.com/questions/23303120/requests-interacting-strangely-with-redirect?rq=1
 import requests
 from bs4 import BeautifulSoup
+import urlutil
 
-marathon = 'http://www.marathonguide.com/results/browse.cfm?MIDD=472131103'
+dict_of_race = {
+	"Chicago2019": 67191013,
+	"Chicago2018": 67181007,
+	"Chicago2017": 67171008,
+	"NewYork2019": 472191103,
+	"NewYork2018": 472181104,
+	"NewYork2017": 472171105
+}
+
+def get_num_participants(race):
+	'''
+	Get the number of participants of a race
+	'''
+	search_page = 'http://www.marathonguide.com/results/browse.cfm?MIDD=' + dict_of_race[race]
+	request = urlutil.get_request(search_page)
+	text = urlutil.read_request(request)
+	soup = BeautifulSoup(text)
+	option_tag = soup.find("select", attrs={'name':"RaceRange", 'onchange':'clearoptions(0);'})
+	last_range = option_tag.find_all("option")[-1].text
+	# last_range is of the form 45901 - 45956
+
+def get_soup(race):
+	'''
+	Given a race such as "Chicago2019", this function returns a list of soups
+	of pages that contain the results of marathon. 
+
+	Input:
+	    race (string): race name
+
+	Output:
+	    list of soup objects
+	'''
+
+	search_page = 'http://www.marathonguide.com/results/browse.cfm?MIDD=' + dict_of_race[race]
+	s = requests.session()
+	p = s.get(marathon)
+
+
+
 
 s = requests.session()
 p = s.get(marathon)
@@ -21,6 +60,7 @@ headers = {
 results = s.post(rp, data=data, headers=headers)
 soup = BeautifulSoup(results.content)
 
+<<<<<<< HEAD
 
 
 entries = soup.find_all("tr", {"bgcolor":"#CCCCCC"}) # first entry is always purple
@@ -57,6 +97,13 @@ for i in range(99):
 
 #for row in rows:
 #  print(row.find("td").get_text())
+=======
+rows = soup.find_all("tr", {"bgcolor":"#CCCCCC"})
+for row in rows:
+	next_person = bs4.next_sibling(row)
+	print(row.find("td").get_text())
+
+>>>>>>> 000e3b1ab540f7c25029e083f4af95413f5ce4f6
 
 # https://github.com/trchan/boston-marathon/blob/master/marathon/marathonguide.py
 
