@@ -49,7 +49,8 @@
 import requests
 import bs4
 
-url = "https://www.strava.com/login"
+get_url = "https://www.strava.com/login"
+post_url = "https://www.strava.com"
 headers = {
     'user-agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:72.0) Gecko/20100101 Firefox/72.0'
 }
@@ -62,7 +63,7 @@ login_data = {
 }
 
 with requests.Session() as s:
-    r = s.get(url, headers=headers)
+    r = s.get(get_url, headers=headers)
     soup = bs4.BeautifulSoup(r.content, 'lxml')
 
     utf8 = soup.find("input", attrs={'name': "utf8"}).get('value').encode('utf-8')
@@ -74,5 +75,5 @@ with requests.Session() as s:
     plan = soup.find("input", attrs={'name': "plan"}).get('value')
     login_data['plan'] = plan
 
-    r = s.post(url, headers=headers, data=login_data)
+    r = s.post(post_url, headers=headers, data=login_data)
     print(r.content)
