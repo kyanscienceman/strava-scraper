@@ -8,6 +8,7 @@ import re
 import urlutil
 import csv
 
+
 def go():
     '''
     Function that scrapes all 
@@ -101,3 +102,21 @@ def scrape_activity(activity_url, attr_dict):
         writer.writerow(attr_dict)
         
 go()
+
+
+'''
+driver = webdriver.Firefox()
+driver.get("http://www.strava.com/login")
+elem = driver.find_element_by_id("email")
+elem.send_keys("stravascraper123@mail.com")
+elem = driver.find_element_by_id("password")
+elem.send_keys("2hourmarathon")
+elem = driver.find_element_by_id("remember_me")
+elem.click()
+elem.submit()
+
+driver.get("http://www.strava.com/activities/2786269073")
+elem = driver.find_element_by_class_name("gear-name")
+elem.get_attribute("innerHTML")
+
+'''
