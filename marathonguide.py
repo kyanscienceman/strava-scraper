@@ -7,7 +7,10 @@ marathon = 'http://www.marathonguide.com/results/browse.cfm?MIDD=472131103'
 s = requests.session()
 p = s.get(marathon)
 
-race_range = 'M,301,400,50062'
+race_range = 'B,1,100,50062'
+
+#race_range = "Overall, Begin, End, Max"
+
 rp = 'http://www.marathonguide.com/results/makelinks.cfm'
 data = {'RaceRange':race_range, 'RaceRange_Required':'You must make a selection before viewing results.', 'MIDD':'472131103', 'SubmitButton':'View'}
 headers = {
@@ -18,9 +21,42 @@ headers = {
 results = s.post(rp, data=data, headers=headers)
 soup = BeautifulSoup(results.content)
 
-rows = soup.find_all("tr", {"bgcolor":"#CCCCCC"})
-for row in rows:
-  print(row.find("td").get_text())
+
+
+entries = soup.find_all("tr", {"bgcolor":"#CCCCCC"}) # first entry is always purple
+first_entry = entries[0]
+name = first_entry.find("td").get_text()
+time = first_entry.find("td").next.next.next
+time_text = time.get_text()
+overall_place = time.next.next.next
+overall_place_text = overall_place.get_text()
+div_place = overall_place.next.next.next
+div_place_text = div_place.get_text()
+div = div_place.next.next.next
+div_text = div.get_text()
+origin = div.next.next.next
+origin_text = origin.get_text()
+print(name, time_text, overall_place_text, div_place_text, div_text, origin_text)
+
+for i in range(99):
+    current_entry = first_entry.next_sibling.next_sibling
+    name = current_entry.find("td").get_text()
+    time = current_entry.find("td").next.next.next
+    time_text = time.get_text()
+    overall_place = time.next.next.next
+    overall_place_text = overall_place.get_text()
+    div_place = overall_place.next.next.next
+    div_place_text = div_place.get_text()
+    div = div_place.next.next.next
+    div_text = div.get_text()
+    origin = div.next.next.next
+    origin_text = origin.get_text()
+    print(name, time_text, overall_place_text, div_place_text, div_text, origin_text)
+    first_entry = current_entry
+
+
+#for row in rows:
+#  print(row.find("td").get_text())
 
 # https://github.com/trchan/boston-marathon/blob/master/marathon/marathonguide.py
 
