@@ -3,17 +3,53 @@ This program scrapes the Chicago marathon page
 '''
 
 # Example pages
-# https://results.chicagomarathon.com/2019/?page=1&event=MAR&lang=EN_CAP&pid=list&search%5Bsex%5D=M&search%5Bage_class%5D=%25
-# https://chicago-history.r.mikatiming.com/2018/?page=2&event=MAR_999999107FA30900000000B5&lang=EN_CAP&pid=list&search%5Bsex%5D=M&search%5Bage_class%5D=%25
 
+'''
+2019 results Men
+https://results.chicagomarathon.com/2019/?page=1&event=MAR&lang=EN_CAP&pid=list&search%5Bsex%5D=M&search%5Bage_class%5D=%25
+
+2018 results Women
+https://chicago-history.r.mikatiming.com/2018/?page=2&event=MAR_999999107FA30900000000B5&lang=EN_CAP&pid=list&search%5Bsex%5D=W&search%5Bage_class%5D=%25
+
+2018 results Men
+https://chicago-history.r.mikatiming.com/2018/?page=2&event=MAR_999999107FA30900000000B5&lang=EN_CAP&pid=list&search%5Bsex%5D=M&search%5Bage_class%5D=%25
+
+2017 results Men
+https://chicago-history.r.mikatiming.com/2018/?page=2&event=MAR_999999107FA30900000000A1&lang=EN_CAP&pid=list&search%5Bsex%5D=M&search%5Bage_class%5D=%25
+
+'''
 
 import urlutil
 import bs4
 import re
 import csv
+import sys
 
 
+year_url_dict = {
+    2019: ["https://results.chicagomarathon.com/2019/?page=",
+        "&event=MAR&lang=EN_CAP&pid=list&search%5Bsex%5D=",
+        "&search%5Bage_class%5D=%25"], 
+    2018: ["https://chicago-history.r.mikatiming.com/2018/?page=",
+        "&event=MAR_999999107FA30900000000B5&lang=EN_CAP&pid=list&search%5Bsex%5D=",
+        "&search%5Bage_class%5D=%25"] ,
+    2017: ["https://chicago-history.r.mikatiming.com/2018/?page=",
+        "&event=MAR_999999107FA30900000000A1&lang=EN_CAP&pid=list&search%5Bsex%5D=",
+        "&search%5Bage_class%5D=%25"] 
+}
 
+
+def find_page_num(url):
+    '''
+    Given an url link, this function returns the number of pages of this marathon result
+    '''
+    request = urlutil.get_request(url)
+    text = urlutil.read_request(request)
+    soup = bs4.BeautifulSoup(text, features='lxml')
+
+    button = soup.find("li", class_="pages-nav-button")
+
+    return int(button.previous_sibling.text)
 
 def scrape_a_page(url):
     request = urlutil.get_request(url)
@@ -52,17 +88,35 @@ def scrape_a_page(url):
     
 
  
-def go():
+def go(year):
     '''
     Given a year, this function creates a csv file of the race results
     of Chicago that year. 
     '''
-    with open("chicagomarathon2018.csv", mode='w') as csvfile:
+    url_info = year_url_dict[year]
+    year_1 = url_info[0]
+    year_2 = url_info[1]
+    year_3 = url_info[2]
+    with open("chicagomarathon2017.csv", mode='w') as csvfile:
         result_writer = csv.writer(csvfile)
-        for i in range(1,958):
-            print(i)
-            url = "https://chicago-history.r.mikatiming.com/2018/?page=" + str(i) + "&event=MAR_999999107FA30900000000B5&lang=EN_CAP&pid=list&search%5Bsex%5D=M&search%5Bage_class%5D=%25"
-            names, age_class_lst, time_lst = scrape_a_page(url)
+        initial_women_url = year_1 + '1' + year_2 + "W" + year_3
+        page_num = find_page_num(initial_women_url)
+        # write women results:
+        for i in range(1,page_num + 1):
+            print("W", i)
+            women_url = year_1 + str(i) + year_2 + "W" + year_3
+            names, age_class_lst, time_lst = scrape_a_page(women_url)
+            n = len(names)
+            for k in range(0,n):
+                result_writer.writerow([names[k], age_class_lst[k], time_lst[k]])
+
+        # write men results:
+        initial_men_url = year_1 + '1' + year_2 + "M" + year_3
+        page_num = find_page_num(initial_men_url)
+        for i in range(1,page_num + 1):
+            print("M", i)
+            men_url = year_1 + str(i) + year_2 + "M" + year_3
+            names, age_class_lst, time_lst = scrape_a_page(men_url)
             n = len(names)
             for k in range(0,n):
                 result_writer.writerow([names[k], age_class_lst[k], time_lst[k]])
@@ -70,4 +124,6 @@ def go():
 
 
 if __name__ == "__main__":
-    go()
+    # usage example: python3 chicagomarathon.py 2019
+    year = int(sys.argv[1])
+    go(year)
