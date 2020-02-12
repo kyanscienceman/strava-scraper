@@ -1,3 +1,4 @@
+# #Code is from https://github.com/loisaidasam/stravalib-scraper
 # import bs4
 # import requests
 
@@ -62,8 +63,8 @@ HEADERS = {
     'Content-Length': "191",
     'Origin': "https://www.strava.com",
     'Connection': "keep-alive",
-    'Cookie': "ajs_anonymous_id=%226c7f28bf-7dc6-458d-ae6e-1a77d64bb699%22; sp=9b0c7ee1-35b7-4de1-b435-4591d5a6df24; _ga=GA1.2.78499818.1581111281; _fbp=fb.1.1581111281182.1991822037; _strava_cookie_banner=true; _sp_id.047d=7d1689d5-3c2a-4af1-bad4-9f67f5160169.1581118356.1.1581534481.1581118378.b964ce46-dd55-4f20-9b53-239c0d2a946b; ajs_user_id=null; ajs_group_id=null; _strava4_session=f4p9kcvcf0av2p4a1ao58ajt2p2q521k; _sp_ses.047d=*; _gid=GA1.2.1424905716.1581534482; _dc_gtm_UA-6309847-24=1",
-    'Upgrade-Insecure-Requests': "1",
+	'Cookie': 'ajs_anonymous_id=%226360426c-11a4-4df6-8203-2cfeac907d31%22; sp=9b0c7ee1-35b7-4de1-b435-4591d5a6df24; _ga=GA1.2.78499818.1581111281; _fbp=fb.1.1581111281182.1991822037; _strava_cookie_banner=true; _gid=GA1.2.1424905716.1581534482; _strava4_session=75crj4v84fn2ccefpiu6sdfkfpobr8es; _sp_ses.047d=*; _dc_gtm_UA-6309847-24=1; _sp_id.047d=c5b35e03-9a67-4a48-9eef-985744f06b81.1581538078.0.1581538081..7f396e00-a16d-446a-aec1-caeb8aefd3f1; ajs_user_id=null; ajs_group_id=null',
+	'Upgrade-Insecure-Requests': "1",
     'TE': "Trailers"
 }
 LOGIN_DATA = {
