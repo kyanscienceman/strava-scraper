@@ -91,7 +91,11 @@ def strava_scrape(filename):
                     attr_dict['Time1'] = a.find("td", class_="finish-time").text
 
                     #Information on the activities page
-                    attr_dict['Shoes'] = shoes.text.strip()
+                    shoe_name = re.findall(r"(.+)\s\(", shoes.text.strip())
+                    if shoe_name:
+                        attr_dict['Shoes'] = shoe_name[0]
+                    else:
+                        attr_dict['Shoes'] = None
                     attr_dict['Time2'] = stats.find_all("li")[1].find("strong").text
 
                     #Write this information to the specified CSV file
