@@ -68,7 +68,12 @@ def get_soup_of_range(race, race_range):
     s = requests.session()
     race_range_in_text = ','.join(['B', str(lower), str(upper), str(num_participants)])
     rp = 'http://www.marathonguide.com/results/makelinks.cfm'
-    data = {'RaceRange':race_range_in_text, 'RaceRange_Required':'You must make a selection before viewing results.', 'MIDD':race_id, 'SubmitButton':'View'}
+    data = {
+    'RaceRange':race_range_in_text, 
+    'RaceRange_Required':'You must make a selection before viewing results.', 
+    'MIDD':race_id, 
+    'SubmitButton':'View'}
+    
     headers = {
     "Referer":"http://www.marathonguide.com/results/browse.cfm?MIDD=" + race_id,
     "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36"
