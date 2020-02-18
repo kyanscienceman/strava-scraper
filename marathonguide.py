@@ -12,15 +12,27 @@ dict_of_race = {
     "Chicago2019": 67191013,
     "Chicago2018": 67181007,
     "Chicago2017": 67171008,
+    "Chicago2016": 67161009,
+    "Chicago2015": 67151011,
+    "Chicago2014": 67141012,
     "NewYork2019": 472191103,
     "NewYork2018": 472181104,
     "NewYork2017": 472171105, 
+    "NewYork2016": 472161106,
+    "NewYork2015": 472151101,
+    "NewYork2014": 472141102,
     "Boston2019": 15190415, 
     "Boston2018": 15180416,
-    "Boston2017": 15170417, 
+    "Boston2017": 15170417,
+    "Boston2016": 15160418, 
+    "Boston2015": 15150420,
+    "Boston2014": 15140421,
     "London2019": 16190428, 
     "London2018": 16180422,
-    "London2017": 16170423
+    "London2017": 16170423, 
+    "London2016": 16160424, 
+    "London2015": 16150426, 
+    "London2014": 16140413
 }
 
 def get_num_participants(race):
@@ -114,7 +126,7 @@ def get_result_in_one_page(soup):
     current_entry = entries[0]
     
     info_lst = []
-    for i in range(100):
+    while current_entry != None:
         name = current_entry.find("td").get_text()
         name = re.findall('(.+)\ \(', name)[0] 
         time = current_entry.find("td").next.next.next
@@ -130,7 +142,6 @@ def get_result_in_one_page(soup):
         # we only need name, age_div, and time
         
         current_entry = current_entry.next_sibling.next_sibling
-
         info_lst.append((name, age_div, net_time_text))
 
     return info_lst
@@ -147,7 +158,7 @@ def go(race):
     num_participants = get_num_participants(race)
     range_lst = get_race_ranges(num_participants)
 
-    with open(race + "official.csv", mode='w') as csvfile:
+    with open("./race_result/" + race + "official.csv", mode='w') as csvfile:
         result_writer = csv.writer(csvfile)
         for race_range in range_lst: 
             print(race_range)
