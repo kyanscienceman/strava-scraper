@@ -8,11 +8,14 @@ import re
 import urlutil
 import csv
 import time
+from itertools import cycle 
+from lxml.html import fromstring
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
+# from selenium.webdriver.common.by import By
+# from selenium.webdriver.support.ui import WebDriverWait
+# from selenium.webdriver.support import expected_conditions as EC
 
 BASE_URL = "https://www.strava.com"
 MARATHON_IDS = {
@@ -36,6 +39,49 @@ LOGIN_EMAIL = "stravascraper123@mail.com"
 LOGIN_PASSWORD = "2hourmarathon"
 FIELDNAMES = ["RaceID", "Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
 
+def get_proxies():
+    '''
+    Gets a list of proxy IP addresses to use,
+    filtering for those based in the US
+
+    Returns: cycle object containing all proxies found
+    '''
+    req_proxy = RequestProxy() 
+    proxies = req_proxy.get_proxy_list()
+    US_proxies = []
+    for p in proxies:
+        if p.country == 'United States':
+            US_proxies.append(p)
+    proxy_pool = cycle(US_proxies)
+    return proxy_pool
+
+def setup_driver(proxy_pool):
+    '''
+    Opens a Selenium webdriver object using a new proxy IP address
+
+    Inputs:
+        proxy_pool: cycle object containing IP addresses
+
+    Returns: webdriver object with the https://www.strava.com/login page open
+    '''
+    working_proxy = False
+    while not working_proxy:
+        proxy = next(proxy_pool)
+        PROXY = proxy.get_address()
+        webdriver.DesiredCapabilities.FIREFOX['proxy']={
+            "httpProxy":PROXY,
+            "ftpProxy":PROXY,
+            "sslProxy":PROXY,
+            "proxyType":"MANUAL",
+        }
+        driver = webdriver.Firefox()
+        try:
+            driver.get(LOGIN_URL)
+            working_proxy = True
+        except:
+            continue
+    return driver
+
 def strava_scrape(filename):
     '''
     Function that scrapes all marathons in MARATHON_PAGES
@@ -46,37 +92,34 @@ def strava_scrape(filename):
 
     Returns: None, but writes a new CSV file
     '''
-    #Prepare 
+    #Prepare csv file for results
     with open(filename, 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES, delimiter='|')
         writer.writeheader()
+        
+    #Get a list of proxy IP addresses to use
+    proxy_pool = get_proxies()
 
-    #Log into Strava using our dummy account
-    driver = webdriver.Firefox()
-    driver.get(LOGIN_URL)
-    elem = driver.find_element_by_id("email")
-    elem.send_keys(LOGIN_EMAIL)
-    elem = driver.find_element_by_id("password")
-    elem.send_keys(LOGIN_PASSWORD)
-    elem.submit()
-    time.sleep(1) #To make sure server catches up 
-    
-    #Using this driver, start scraping the relevant data
-    for page in MARATHON_PAGES:
+    for page in MARATHON_PAGES: 
         page_num = 1
         last_page_num = sys.maxsize
 
-        #Navigate to the first page of the marathon results
-        driver.get(page.format(page_num))
-        # try: #Add this wait to ensure page loads before we continue
-        #     element = WebDriverWait(driver, 10).until(
-        #         EC.presence_of_element_located((By.ID, "results-table"))
-        #     )
-        # finally:
-        #     driver.quit()
-        soup = bs4.BeautifulSoup(driver.page_source, 'lxml')
-
         while page_num <= last_page_num:
+            #Setup driver with a new proxy IP address
+            driver = setup_driver(proxy_pool)
+
+            #Log in to Strava with this driver
+            elem = driver.find_element_by_id("email")
+            elem.send_keys(LOGIN_EMAIL)
+            elem = driver.find_element_by_id("password")
+            elem.send_keys(LOGIN_PASSWORD)
+            elem.submit()
+            time.sleep(5) #To make sure server catches up
+
+            #Navigate to the marathon results page
+            driver.get(page.format(page_num))
+            soup = bs4.BeautifulSoup(driver.page_source, 'lxml')
+
             #If this is the first page, find what the last page number is
             if page_num == 1:
                 li = soup.find("li", class_="next_page")
@@ -123,6 +166,9 @@ def strava_scrape(filename):
                 with open(filename, 'a') as csvfile:
                     writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES, delimiter='|')
                     writer.writerow(attr_dict)
+
+                #In order to avoid "Too Many Requests", try adding a delay 
+                time.sleep(5)
 
             #Move to the next page of marathon results
             page_num += 1
