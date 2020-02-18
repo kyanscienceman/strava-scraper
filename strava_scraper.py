@@ -15,14 +15,26 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 BASE_URL = "https://www.strava.com"
+MARATHON_IDS = {
+    'CH14': ('2014-12-10', 'Chicago'),
+    'CH15': ('2015-11-10', 'Chicago'),
+    'CH16': ('2016-09-10', 'Chicago'),
+    'CH17': ('2017-08-10', 'Chicago'),
+    'CH18': ('2018-07-10', 'Chicago'),
+    'CH19': ('2019-13-10', 'Chicago')
+}
 MARATHON_PAGES = {
-    'https://www.strava.com/running_races/2153/results?page={}': ('2018-07-10', 'Chicago'),
-    'https://www.strava.com/running_races/2017-chicago-marathon/results?page={}': ('2018-08-10', 'Chicago'),
-    'https://www.strava.com/running_races/2782/results?page={}': ('2019-13-10', 'Chicago')
+    'https://www.strava.com/running_races/2014-chicago-marathon/results?page={}': 'CH14',
+    'https://www.strava.com/running_races/2015-chicago-marathon/results?page={}': 'CH15',
+    'https://www.strava.com/running_races/2016-chicago-marathon/results?page={}': 'CH16',
+    'https://www.strava.com/running_races/2017-chicago-marathon/results?page={}': 'CH17',
+    'https://www.strava.com/running_races/2153/results?page={}': 'CH18',
+    'https://www.strava.com/running_races/2782/results?page={}': 'CH19'
 }
 LOGIN_URL = BASE_URL + "/login"
 LOGIN_EMAIL = "stravascraper123@mail.com"
 LOGIN_PASSWORD = "2hourmarathon"
+FIELDNAMES = ["RaceID", "Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
 
 def strava_scrape(filename):
     '''
@@ -36,8 +48,7 @@ def strava_scrape(filename):
     '''
     #Prepare 
     with open(filename, 'w') as csvfile:
-        fieldnames = ["Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='|')
+        writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES, delimiter='|')
         writer.writeheader()
 
     #Log into Strava using our dummy account
@@ -93,6 +104,7 @@ def strava_scrape(filename):
 
                 #If the shoes are listed, then get all the information for this run
                 attr_dict = {}
+                attr_dict['RaceID'] = MARATHON_PAGES[page]
 
                 #Information on the running_races page
                 attr_dict['Name'] = a.find("a", class_="minimal").text
@@ -109,14 +121,13 @@ def strava_scrape(filename):
 
                 #Write this information to the specified CSV file
                 with open(filename, 'a') as csvfile:
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='|')
+                    writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES, delimiter='|')
                     writer.writerow(attr_dict)
 
             #Move to the next page of marathon results
             page_num += 1
-            break
 
     #When we are done with all the marathons, close the selenium driver
     driver.close()
 
-strava_scrape("strava.csv")
+strava_scrape("chicago_20142019.csv")
