@@ -13,9 +13,9 @@ from lxml.html import fromstring
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
-# from selenium.webdriver.common.by import By
-# from selenium.webdriver.support.ui import WebDriverWait
-# from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 BASE_URL = "https://www.strava.com"
 MARATHON_IDS = {
@@ -35,9 +35,14 @@ MARATHON_PAGES = {
     'https://www.strava.com/running_races/2782/results?page={}': 'CH19'
 }
 LOGIN_URL = BASE_URL + "/login"
-LOGIN_EMAIL = "stravascraper123@mail.com"
+#LOGIN_EMAIL = "stravascraper123@mail.com"
 LOGIN_PASSWORD = "2hourmarathon"
+L_STR = 'uchistrava{}@gmail.com'
+LOGIN_EMAILS = [L_STR.format('+'+str(i)) for i in range(1, 11)]
 FIELDNAMES = ["RaceID", "Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
+with open('CSIL_IPS.csv', newline='') as f:
+    reader = csv.reader(f)
+    CSIL_IPS = [r[0] for r in reader]
 
 def get_proxies():
     '''
@@ -98,23 +103,42 @@ def strava_scrape(filename):
         writer.writeheader()
         
     #Get a list of proxy IP addresses to use
-    proxy_pool = get_proxies()
+    #proxy_pool = cycle(CSIL_IPS)
+    email_pool = cycle(LOGIN_EMAILS)
 
-    for page in MARATHON_PAGES: 
+    for page in MARATHON_PAGES:
         page_num = 1
         last_page_num = sys.maxsize
 
         while page_num <= last_page_num:
             #Setup driver with a new proxy IP address
-            driver = setup_driver(proxy_pool)
+            # working_proxy = False
+            # while not working_proxy:
+            #     proxy = next(proxy_pool)
+            #     webdriver.DesiredCapabilities.FIREFOX['proxy']={
+            #         "httpProxy":proxy,
+            #         "ftpProxy":proxy,
+            #         "sslProxy":proxy,
+            #         "proxyType":"MANUAL",
+            #     }
+            #     driver = webdriver.Firefox()
+            #     try:
+            #         driver.get(LOGIN_URL)
+            #         working_proxy = True
+            #     except:
+            #         time.sleep(4)
+            #         driver.close()
+            #         continue
 
             #Log in to Strava with this driver
+            driver = webdriver.Firefox()
+            driver.get(LOGIN_URL)
             elem = driver.find_element_by_id("email")
-            elem.send_keys(LOGIN_EMAIL)
+            elem.send_keys(next(email_pool))
             elem = driver.find_element_by_id("password")
             elem.send_keys(LOGIN_PASSWORD)
             elem.submit()
-            time.sleep(5) #To make sure server catches up
+            time.sleep(2) #To make sure server catches up
 
             #Navigate to the marathon results page
             driver.get(page.format(page_num))
@@ -168,12 +192,13 @@ def strava_scrape(filename):
                     writer.writerow(attr_dict)
 
                 #In order to avoid "Too Many Requests", try adding a delay 
-                time.sleep(5)
+                #time.sleep(5)
 
             #Move to the next page of marathon results
+            driver.close()
             page_num += 1
 
     #When we are done with all the marathons, close the selenium driver
     driver.close()
 
-strava_scrape("chicago_20142019.csv")
+strava_scrape("race_result/strava_chicago.csv")
