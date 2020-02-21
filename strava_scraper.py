@@ -13,6 +13,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
 
 BASE_URL = "https://www.strava.com"
 MARATHON_IDS = {
@@ -36,6 +37,14 @@ LOGIN_EMAIL = "stravascraper123@mail.com"
 LOGIN_PASSWORD = "2hourmarathon"
 FIELDNAMES = ["RaceID", "Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
 
+CHROME_PATH = '/usr/bin/google-chrome'
+# CHROMEDRIVER_PATH = '~/three-plus-one/chromedriver'
+WINDOW_SIZE = "1920,1080"
+CHROME_OPTIONS = Options()  
+CHROME_OPTIONS.add_argument("--headless")  
+CHROME_OPTIONS.add_argument("--window-size=%s" % WINDOW_SIZE)
+CHROME_OPTIONS.binary_location = CHROME_PATH
+
 def strava_scrape(filename):
     '''
     Function that scrapes all marathons in MARATHON_PAGES
@@ -52,7 +61,11 @@ def strava_scrape(filename):
         writer.writeheader()
 
     #Log into Strava using our dummy account
-    driver = webdriver.Firefox()
+    
+
+	driver = webdriver.Chrome(options=CHROME_OPTIONS)  
+
+    # driver = webdriver.Firefox()
     driver.get(LOGIN_URL)
     elem = driver.find_element_by_id("email")
     elem.send_keys(LOGIN_EMAIL)
@@ -130,4 +143,9 @@ def strava_scrape(filename):
     #When we are done with all the marathons, close the selenium driver
     driver.close()
 
-strava_scrape("chicago_20142019.csv")
+# strava_scrape("chicago_20142019.csv")
+
+
+if __name__=="__main__":
+	filename = sys.argv[1]
+	strava_scrape(filename)
