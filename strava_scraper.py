@@ -8,8 +8,11 @@ import re
 import urlutil
 import csv
 import time
+from itertools import cycle 
+from lxml.html import fromstring
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from http_request_randomizer.requests.proxy.requestProxy import RequestProxy
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -33,9 +36,14 @@ MARATHON_PAGES = {
     'https://www.strava.com/running_races/2782/results?page={}': 'CH19'
 }
 LOGIN_URL = BASE_URL + "/login"
-LOGIN_EMAIL = "stravascraper123@mail.com"
+#LOGIN_EMAIL = "stravascraper123@mail.com"
 LOGIN_PASSWORD = "2hourmarathon"
+L_STR = 'uchistrava{}@gmail.com'
+LOGIN_EMAILS = [L_STR.format('+'+str(i)) for i in range(1, 11)]
 FIELDNAMES = ["RaceID", "Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
+with open('CSIL_IPS.csv', newline='') as f:
+    reader = csv.reader(f)
+    CSIL_IPS = [r[0] for r in reader]
 
 CHROME_PATH = '/usr/bin/google-chrome'
 # CHROMEDRIVER_PATH = '~/three-plus-one/chromedriver'
@@ -44,6 +52,52 @@ CHROME_OPTIONS = Options()
 CHROME_OPTIONS.add_argument("--headless")  
 CHROME_OPTIONS.add_argument("--window-size=%s" % WINDOW_SIZE)
 CHROME_OPTIONS.binary_location = CHROME_PATH
+
+
+def get_proxies():
+    '''
+    Gets a list of proxy IP addresses to use,
+    filtering for those based in the US
+
+    Returns: cycle object containing all proxies found
+    '''
+    req_proxy = RequestProxy() 
+    proxies = req_proxy.get_proxy_list()
+    US_proxies = []
+    for p in proxies:
+        if p.country == 'United States':
+            US_proxies.append(p)
+    proxy_pool = cycle(US_proxies)
+    return proxy_pool
+
+
+def setup_driver(proxy_pool):
+    '''
+    Opens a Selenium webdriver object using a new proxy IP address
+
+    Inputs:
+        proxy_pool: cycle object containing IP addresses
+
+    Returns: webdriver object with the https://www.strava.com/login page open
+    '''
+    working_proxy = False
+    while not working_proxy:
+        proxy = next(proxy_pool)
+        PROXY = proxy.get_address()
+        webdriver.DesiredCapabilities.FIREFOX['proxy']={
+            "httpProxy":PROXY,
+            "ftpProxy":PROXY,
+            "sslProxy":PROXY,
+            "proxyType":"MANUAL",
+        }
+        driver = webdriver.Firefox()
+        try:
+            driver.get(LOGIN_URL)
+            working_proxy = True
+        except:
+            continue
+    return driver
+
 
 def strava_scrape(filename):
     '''
@@ -55,41 +109,53 @@ def strava_scrape(filename):
 
     Returns: None, but writes a new CSV file
     '''
-    #Prepare 
+    #Prepare csv file for results
     with open(filename, 'w') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES, delimiter='|')
         writer.writeheader()
+        
+    #Get a list of proxy IP addresses to use
+    #proxy_pool = cycle(CSIL_IPS)
+    email_pool = cycle(LOGIN_EMAILS)
 
-    #Log into Strava using our dummy account
-    
-
-	driver = webdriver.Chrome(options=CHROME_OPTIONS)  
-
-    # driver = webdriver.Firefox()
-    driver.get(LOGIN_URL)
-    elem = driver.find_element_by_id("email")
-    elem.send_keys(LOGIN_EMAIL)
-    elem = driver.find_element_by_id("password")
-    elem.send_keys(LOGIN_PASSWORD)
-    elem.submit()
-    time.sleep(1) #To make sure server catches up 
-    
-    #Using this driver, start scraping the relevant data
     for page in MARATHON_PAGES:
         page_num = 1
         last_page_num = sys.maxsize
 
-        #Navigate to the first page of the marathon results
-        driver.get(page.format(page_num))
-        # try: #Add this wait to ensure page loads before we continue
-        #     element = WebDriverWait(driver, 10).until(
-        #         EC.presence_of_element_located((By.ID, "results-table"))
-        #     )
-        # finally:
-        #     driver.quit()
-        soup = bs4.BeautifulSoup(driver.page_source, 'lxml')
-
         while page_num <= last_page_num:
+            #Setup driver with a new proxy IP address
+            # working_proxy = False
+            # while not working_proxy:
+            #     proxy = next(proxy_pool)
+            #     webdriver.DesiredCapabilities.FIREFOX['proxy']={
+            #         "httpProxy":proxy,
+            #         "ftpProxy":proxy,
+            #         "sslProxy":proxy,
+            #         "proxyType":"MANUAL",
+            #     }
+            #     driver = webdriver.Firefox()
+            #     try:
+            #         driver.get(LOGIN_URL)
+            #         working_proxy = True
+            #     except:
+            #         time.sleep(4)
+            #         driver.close()
+            #         continue
+
+            #Log in to Strava with this driver
+            driver = webdriver.Chrome(options=CHROME_OPTIONS)  
+            driver.get(LOGIN_URL)
+            elem = driver.find_element_by_id("email")
+            elem.send_keys(next(email_pool))
+            elem = driver.find_element_by_id("password")
+            elem.send_keys(LOGIN_PASSWORD)
+            elem.submit()
+            time.sleep(2) #To make sure server catches up
+
+            #Navigate to the marathon results page
+            driver.get(page.format(page_num))
+            soup = bs4.BeautifulSoup(driver.page_source, 'lxml')
+
             #If this is the first page, find what the last page number is
             if page_num == 1:
                 li = soup.find("li", class_="next_page")
@@ -137,13 +203,17 @@ def strava_scrape(filename):
                     writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES, delimiter='|')
                     writer.writerow(attr_dict)
 
+                #In order to avoid "Too Many Requests", try adding a delay 
+                #time.sleep(5)
+
             #Move to the next page of marathon results
+            driver.close()
             page_num += 1
 
     #When we are done with all the marathons, close the selenium driver
     driver.close()
 
-# strava_scrape("chicago_20142019.csv")
+# strava_scrape("race_result/strava_chicago.csv")
 
 
 if __name__=="__main__":
