@@ -90,7 +90,7 @@ def setup_driver(proxy_pool):
             "sslProxy":PROXY,
             "proxyType":"MANUAL",
         }
-        driver = webdriver.Firefox()
+        driver = webdriver.Chrome(options=CHROME_OPTIONS)  
         try:
             driver.get(LOGIN_URL)
             working_proxy = True
@@ -99,13 +99,15 @@ def setup_driver(proxy_pool):
     return driver
 
 
-def strava_scrape(filename):
+def strava_scrape(filename, marathon_page, start_page_num):
     '''
     Function that scrapes all marathons in MARATHON_PAGES
     and writes the information to a CSV file
 
     Inputs:
         filename (string): name of file
+        marathon_page (string): url of race result page
+        start_page_num (int): the page number in the result page that we start from
 
     Returns: None, but writes a new CSV file
     '''
@@ -118,97 +120,111 @@ def strava_scrape(filename):
     #proxy_pool = cycle(CSIL_IPS)
     email_pool = cycle(LOGIN_EMAILS)
 
-    for page in MARATHON_PAGES:
-        page_num = 1
-        last_page_num = sys.maxsize
+    
+    page_num = start_page_num
+    last_page_num = sys.maxsize
 
-        while page_num <= last_page_num:
-            #Setup driver with a new proxy IP address
-            # working_proxy = False
-            # while not working_proxy:
-            #     proxy = next(proxy_pool)
-            #     webdriver.DesiredCapabilities.FIREFOX['proxy']={
-            #         "httpProxy":proxy,
-            #         "ftpProxy":proxy,
-            #         "sslProxy":proxy,
-            #         "proxyType":"MANUAL",
-            #     }
-            #     driver = webdriver.Firefox()
-            #     try:
-            #         driver.get(LOGIN_URL)
-            #         working_proxy = True
-            #     except:
-            #         time.sleep(4)
-            #         driver.close()
-            #         continue
+    counter = 1
 
-            #Log in to Strava with this driver
-            driver = webdriver.Chrome(options=CHROME_OPTIONS)  
+    while page_num <= last_page_num:
+        #Setup driver with a new proxy IP address
+        # working_proxy = False
+        # while not working_proxy:
+        #     proxy = next(proxy_pool)
+        #     webdriver.DesiredCapabilities.FIREFOX['proxy']={
+        #         "httpProxy":proxy,
+        #         "ftpProxy":proxy,
+        #         "sslProxy":proxy,
+        #         "proxyType":"MANUAL",
+        #     }
+        #     driver = webdriver.Firefox()
+        #     try:
+        #         driver.get(LOGIN_URL)
+        #         working_proxy = True
+        #     except:
+        #         time.sleep(4)
+        #         driver.close()
+        #         continue
+
+        #Log in to Strava with this driver
+        if page_num % 3 == 1: 
+            driver = webdriver.Chrome(options=CHROME_OPTIONS)
             driver.get(LOGIN_URL)
             elem = driver.find_element_by_id("email")
             elem.send_keys(next(email_pool))
             elem = driver.find_element_by_id("password")
             elem.send_keys(LOGIN_PASSWORD)
             elem.submit()
-            time.sleep(2) #To make sure server catches up
+            time.sleep(1) #To make sure server catches up
 
-            #Navigate to the marathon results page
-            driver.get(page.format(page_num))
-            soup = bs4.BeautifulSoup(driver.page_source, 'lxml')
+        #Navigate to the marathon results page
+        driver.get(marathon_page.format(page_num))
+        soup = bs4.BeautifulSoup(driver.page_source, 'lxml')
 
-            #If this is the first page, find what the last page number is
-            if page_num == 1:
-                li = soup.find("li", class_="next_page")
-                n = li.previous_sibling.previous_sibling.findChild().text
-                last_page_num = int(n)
+        #If this is the first page, find what the last page number is
+        if page_num == 1:
+            li = soup.find("li", class_="next_page")
+            n = li.previous_sibling.previous_sibling.findChild().text
+            last_page_num = int(n)
 
-            #Iterate through all marathon results on this page
-            activities = soup.find("tbody").find_all("tr")
-            for a in activities:
-                #Find the url of the activities page for this athlete's run 
-                a_url = a.find("td", class_="athlete-activity").find(href=True)["href"]
-                a_url = urlutil.convert_if_relative_url(BASE_URL, a_url)
+        #Iterate through all marathon results on this page
+        activities = soup.find("tbody").find_all("tr")
+        if page_num % 10 == 1: 
+            activity_list = []
 
-                #Navigate to the activities page and check for privacy settings 
-                driver.get(a_url)
-                try:
-                    elem = driver.find_element_by_class_name("activity-stats")
-                except:
-                    continue
-                #Then check if they have shoe information
-                stats = bs4.BeautifulSoup(elem.get_attribute("innerHTML"), 'lxml')
-                shoes = stats.find("span", class_="gear-name")
-                if shoes is None:
-                    continue
+        for a in activities:
+            #Find the url of the activities page for this athlete's run 
+            a_url = a.find("td", class_="athlete-activity").find(href=True)["href"]
+            a_url = urlutil.convert_if_relative_url(BASE_URL, a_url)
 
-                #If the shoes are listed, then get all the information for this run
-                attr_dict = {}
-                attr_dict['RaceID'] = MARATHON_PAGES[page]
+            print(marathon_page, "activity", counter)
+            counter += 1
 
-                #Information on the running_races page
-                attr_dict['Name'] = a.find("a", class_="minimal").text
-                attr_dict['Gender'] = a.find("td", class_="athlete-gender").text.strip()
-                attr_dict['Age'] = a.find("td", class_="athlete-age").text
-                attr_dict['Time1'] = a.find("td", class_="finish-time").text
-                #Information on the activities page
-                shoe_name = re.findall(r"(.+)\s\(", shoes.text.strip())
-                if shoe_name:
-                    attr_dict['Shoes'] = shoe_name[0]
-                else:
-                    attr_dict['Shoes'] = None
-                attr_dict['Time2'] = stats.find_all("li")[1].find("strong").text
+            #Navigate to the activities page and check for privacy settings 
+            driver.get(a_url)
+            try:
+                elem = driver.find_element_by_class_name("activity-stats")
+            except:
+                continue
+            #Then check if they have shoe information
+            stats = bs4.BeautifulSoup(elem.get_attribute("innerHTML"), 'lxml')
+            shoes = stats.find("span", class_="gear-name")
+            if shoes is None:
+                continue
 
-                #Write this information to the specified CSV file
-                with open(filename, 'a') as csvfile:
-                    writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES, delimiter='|')
-                    writer.writerow(attr_dict)
+            #If the shoes are listed, then get all the information for this run
+            attr_dict = {}
+            attr_dict['RaceID'] = MARATHON_PAGES[marathon_page]
 
-                #In order to avoid "Too Many Requests", try adding a delay 
-                #time.sleep(5)
+            #Information on the running_races page
+            attr_dict['Name'] = a.find("a", class_="minimal").text
+            attr_dict['Gender'] = a.find("td", class_="athlete-gender").text.strip()
+            attr_dict['Age'] = a.find("td", class_="athlete-age").text
+            attr_dict['Time1'] = a.find("td", class_="finish-time").text
+            #Information on the activities page
+            shoe_name = re.findall(r"(.+)\s\(", shoes.text.strip())
+            if shoe_name:
+                attr_dict['Shoes'] = shoe_name[0]
+            else:
+                attr_dict['Shoes'] = None
+            attr_dict['Time2'] = stats.find_all("li")[1].find("strong").text
 
-            #Move to the next page of marathon results
+            activity_list.append(attr_dict)
+
+        #Write this information to the specified CSV file
+        if page_num % 10 == 0:
+            with open(filename, 'a') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES, delimiter='|')
+                writer.writerows(activity_list)
+
+            #In order to avoid "Too Many Requests", try adding a delay 
+            #time.sleep(5)
+
+        #Move to the next page of marathon results
+        if page_num % 3 == 0:
             driver.close()
-            page_num += 1
+        page_num += 1
+            
 
     #When we are done with all the marathons, close the selenium driver
     driver.close()
@@ -218,4 +234,6 @@ def strava_scrape(filename):
 
 if __name__=="__main__":
 	filename = sys.argv[1]
-	strava_scrape(filename)
+    start_page_num = sys.argv[3]
+    # race_url = ..
+	strava_scrape(filename, race_url, start_page_num)
