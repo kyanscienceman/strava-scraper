@@ -2,9 +2,9 @@ import pandas as pd
 import numpy as numpy
 import jellyfish
 
-### NOTE: We should decide how we want to format the manually link files so they are eay to unpack and use on dfs. As of right now, the marathon and strava csvs are formatted in different ways. Marathon data is by individual race and strava data is by marathon location and contains data from multiple years. We will have to decide if we want to split up the strava data and index matches based on those smaller dataframes or if we should combine marathon data into one larger index 
+### NOTE: I have named this file chicago_linking, but it most likely can be used for linking any marathon considering we format all of our scrapes the same way
 
-### Additionally: I have named this file chicago_linking, but it most likely can be used for linking any marathon considering we format all of our scrapes the same way
+### NOTE: We should think about actually just combining into one df despite the computational intensity. As it is right now, this function is going to end with us returning a variable number of dataframes depending on the amount of unique entries in the raceID column (read: how many races we're tracking per location). We could prevent this by instead combining by race and just blocking on identical raceID, similar to how we block on city in pa4. This reduces computational intensity and allows us to have one set of matches/unmatches/possible dfs per race location
 
 def create_marathon_df(filename, raceID):
     '''
@@ -26,19 +26,24 @@ def create_marathon_df(filename, raceID):
 
     return marathon_df
 
-def create_strava_df(filename):
+def create_strava_df_list(filename):
     '''
-    Takes in the csv file of a race's results scraped from strava and turns it into a useable dataframe object. No processing needed here. This helper function was written for consistency purposes
+    Takes in the csv file of a race's results scraped from strava and turns it into a list of useable dataframe objects, separated by race year.
 
     Inputs:
         filename (string) name of the file we want to turn into a df
     Returns:
-        strava_df (DataFrame) 
+        strava_df_list (list) list of DataFrame objects 
     '''
 
-    strava_df = pd.read_csv(filename, sep='|')
+    master_strava_df = pd.read_csv(filename, sep='|')
 
-    return strava_df
+    strava_df_list = [] 
+    for race in df.raceID.unique():
+        new_df = master_strava_df[master_strava_df['raceID'] == race]
+        strava_df_list.append(new_df)
+
+    return strava_df_list
 
 def create_matches_df(links_filename, marathon_df, strava_df):
     '''
@@ -63,5 +68,29 @@ def create_matches_df(links_filename, marathon_df, strava_df):
 
     return matches
 
+def create_unmatches_df(marathon_df, strava_df):
+    '''
+    Takes both dfs and creates a df of unmatches by randomly pairing indexes
+
+    Inputs:
+        marathon_df (DataFrame)
+        strava_df (DataFrame)
+    Returns:
+        unmatches (DataFrame)
+    '''
+
+    ms = marathon_df.sample(1000, replace=True, random_state= 1234)
+    ss = strava_df.sample(1000, replace=True, random_state= 5678)
+    ms = ms.reset_index()
+    ss = ss.reset_index()
+
+    unmatches = pd.concat([ms, ss], aaxis =1)
+    unmatches = unmatches.drop(columns=['index_num']) #make sure this is the actual name for the index column
+    unmatches.columns = ['RaceID_m', 'Name_m', 'Gender_m', 'Age_m', 'RaceID_s', 'Name_s', 'Gender_s', 'Age_s', 'Time1_s', 'Time2_s', 'Shoes_s'] #Ensure that the columns actually end up in this order
+
+def create_tuple_sets(mu, lambda_):
+    '''
+    Combine previous functions and use them to determine a set of tuples that will be used to determine if a row is a match
+    '''
 
 
