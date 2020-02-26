@@ -28,12 +28,12 @@ MARATHON_IDS = {
     'CH19': ('2019-13-10', 'Chicago')
 }
 MARATHON_PAGES = {
-    'https://www.strava.com/running_races/2014-chicago-marathon/results?page={}': 'CH14',
-    'https://www.strava.com/running_races/2015-chicago-marathon/results?page={}': 'CH15',
-    'https://www.strava.com/running_races/2016-chicago-marathon/results?page={}': 'CH16',
-    'https://www.strava.com/running_races/2017-chicago-marathon/results?page={}': 'CH17',
-    'https://www.strava.com/running_races/2153/results?page={}': 'CH18',
-    'https://www.strava.com/running_races/2782/results?page={}': 'CH19'
+    'CH14': 'https://www.strava.com/running_races/2014-chicago-marathon/results?page={}',
+    'CH15': 'https://www.strava.com/running_races/2015-chicago-marathon/results?page={}',
+    'CH16': 'https://www.strava.com/running_races/2016-chicago-marathon/results?page={}',
+    'CH17': 'https://www.strava.com/running_races/2017-chicago-marathon/results?page={}',
+    'CH18': 'https://www.strava.com/running_races/2153/results?page={}',
+    'CH19': 'https://www.strava.com/running_races/2782/results?page={}'
 }
 LOGIN_URL = BASE_URL + "/login"
 #LOGIN_EMAIL = "stravascraper123@mail.com"
@@ -99,7 +99,7 @@ def setup_driver(proxy_pool):
     return driver
 
 
-def strava_scrape(filename, marathon_page, start_page_num):
+def strava_scrape(filename, race_id, start_page_num):
     '''
     Function that scrapes all marathons in MARATHON_PAGES
     and writes the information to a CSV file
@@ -158,6 +158,7 @@ def strava_scrape(filename, marathon_page, start_page_num):
             time.sleep(1) #To make sure server catches up
 
         #Navigate to the marathon results page
+        marathon_page = MARATHON_PAGES[race_id]
         driver.get(marathon_page.format(page_num))
         soup = bs4.BeautifulSoup(driver.page_source, 'lxml')
 
@@ -194,7 +195,7 @@ def strava_scrape(filename, marathon_page, start_page_num):
 
             #If the shoes are listed, then get all the information for this run
             attr_dict = {}
-            attr_dict['RaceID'] = MARATHON_PAGES[marathon_page]
+            attr_dict['RaceID'] = race_id
 
             #Information on the running_races page
             attr_dict['Name'] = a.find("a", class_="minimal").text
@@ -230,10 +231,11 @@ def strava_scrape(filename, marathon_page, start_page_num):
     driver.close()
 
 # strava_scrape("race_result/strava_chicago.csv")
+# got to activity 1904. Start from page number 90
 
 
 if __name__=="__main__":
-	filename = sys.argv[1]
-    start_page_num = sys.argv[3]
-    # race_url = ..
-	strava_scrape(filename, race_url, start_page_num)
+    filename = sys.argv[1]
+    race_id = sys.argv[2]
+    start_page_num = int(sys.argv[3])
+    strava_scrape(filename, race_id, start_page_num)
