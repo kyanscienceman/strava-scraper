@@ -112,9 +112,10 @@ def strava_scrape(filename, race_id, start_page_num):
     Returns: None, but writes a new CSV file
     '''
     #Prepare csv file for results
-    with open(filename, 'w') as csvfile:
+    with open(filename, 'a') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES, delimiter='|')
-        writer.writeheader()
+        if start_page_num == 1:
+            writer.writeheader()
         
     #Get a list of proxy IP addresses to use
     #proxy_pool = cycle(CSIL_IPS)
@@ -147,7 +148,9 @@ def strava_scrape(filename, race_id, start_page_num):
         #         continue
 
         #Log in to Strava with this driver
-        if page_num % 3 == 1: 
+        try: driver
+        except NameError: driver = None 
+        if page_num % 3 == 1 or driver is None: 
             driver = webdriver.Chrome(options=CHROME_OPTIONS)
             driver.get(LOGIN_URL)
             elem = driver.find_element_by_id("email")
@@ -170,6 +173,8 @@ def strava_scrape(filename, race_id, start_page_num):
 
         #Iterate through all marathon results on this page
         activities = soup.find("tbody").find_all("tr")
+        try: activity_list
+        except NameError: activity_list = []
         if page_num % 10 == 1: 
             activity_list = []
 
