@@ -8,31 +8,35 @@ import re
 import csv
 import sys
 
+# format of the dictionary:
+# "Race Name": (Race ID, Format of Page)
+# Format of Page == 0 for Old Format, == 1 for New Format)
+
 dict_of_race = {
-    "Chicago2019": 67191013,
-    "Chicago2018": 67181007,
-    "Chicago2017": 67171008,
-    "Chicago2016": 67161009,
-    "Chicago2015": 67151011,
-    "Chicago2014": 67141012,
-    "NewYork2019": 472191103,
-    "NewYork2018": 472181104,
-    "NewYork2017": 472171105, 
-    "NewYork2016": 472161106,
-    "NewYork2015": 472151101,
-    "NewYork2014": 472141102,
-    "Boston2019": 15190415, 
-    "Boston2018": 15180416,
-    "Boston2017": 15170417,
-    "Boston2016": 15160418, 
-    "Boston2015": 15150420,
-    "Boston2014": 15140421,
-    "London2019": 16190428, 
-    "London2018": 16180422,
-    "London2017": 16170423, 
-    "London2016": 16160424, 
-    "London2015": 16150426, 
-    "London2014": 16140413
+    "Chicago2019": (67191013, 1),
+    "Chicago2018": (67181007, 1),
+    "Chicago2017": (67171008, 0),
+    "Chicago2016": (67161009, 0),
+    "Chicago2015": (67151011, 0),
+    "Chicago2014": (67141012, 0),
+    "NewYork2019": (472191103, 1),
+    "NewYork2018": (472181104, 1),
+    "NewYork2017": (472171105, 1),
+    "NewYork2016": (472161106, 0),
+    "NewYork2015": (472151101, 0),
+    "NewYork2014": (472141102, 0),
+    "Boston2019": (15190415, 1),
+    "Boston2018": (15180416, 1),
+    "Boston2017": (15170417, 0),
+    "Boston2016": (15160418, 0),
+    "Boston2015": (15150420, 0),
+    "Boston2014": (15140421, 0),
+    "London2019": (16190428, 1),
+    "London2018": (16180422, 1),
+    "London2017": (16170423, 0),
+    "London2016": (16160424, 0),
+    "London2015": (16150426, 0),
+    "London2014": (16140413, 0)
 }
 
 def get_num_participants(race):
@@ -40,12 +44,12 @@ def get_num_participants(race):
     Get the number of participants of a race
 
     Input: 
-        race (string): race name
+        race (tuple): race name and format of table
 
     Output: 
         (int) number of parcipants in this race
     '''
-    search_page = 'http://www.marathonguide.com/results/browse.cfm?MIDD=' + str(dict_of_race[race])
+    search_page = 'http://www.marathonguide.com/results/browse.cfm?MIDD=' + str(dict_of_race[race][0])
     request = urlutil.get_request(search_page)
     text = urlutil.read_request(request)
     soup = bs4.BeautifulSoup(text, features='lxml')
@@ -59,7 +63,7 @@ def get_race_ranges(num_participants):
     Given a number of participants, this function returns a list of ranges of pages.
 
     Input:
-        race (string): race name
+        race (tuple): race name and format of table
 
     Output:
         list of tuples, such as [(1,100), (101,176)]
@@ -80,7 +84,7 @@ def get_soup_of_range(race, race_range):
     soup of the result page with this range.
 
     Input: 
-        race (string): race name
+        race (str): race name
         race_range (tuple): a tuple of range, such as (101, 199)
 
     Output: 
@@ -88,7 +92,7 @@ def get_soup_of_range(race, race_range):
     '''
 
     num_participants = get_num_participants(race)
-    race_id = str(dict_of_race[race])
+    race_id = str(dict_of_race[race][0])
     lower, upper = race_range
     s = requests.session()
     race_range_in_text = ','.join(['B', str(lower), str(upper), str(num_participants)])
@@ -110,13 +114,14 @@ def get_soup_of_range(race, race_range):
 
 
 
-def get_result_in_one_page(soup):
+def get_result_in_one_page(soup, race):
     '''
     Given the soup object of a page, this function returns list of participants
     and their corresponding information in this webpage. 
 
     Input: 
         soup: (soup) webpage of result
+        race (tuple): race name and format of table
 
     Output: 
         info_lst: (list) list of participants' result in this page
@@ -128,17 +133,20 @@ def get_result_in_one_page(soup):
     info_lst = []
     while current_entry != None:
         name = current_entry.find("td").get_text()
-        name = re.findall('(.+)\ \(', name)[0] 
-        time = current_entry.find("td").next.next.next
-        time_text = time.get_text()
-        overall_place = time.next.next.next
-        overall_place_text = overall_place.get_text()
-        div_place = overall_place.next.next.next
-        age_div = div_place.get_text()
-        div = div_place.next.next.next
-        net_time_text = div.get_text()
-        origin = div.next.next.next
-        origin_text = origin.get_text()
+        name = re.findall('(.+)\\(', name)[0]
+        if race[1] == 1:
+            time = current_entry.find("td").next.next.next
+            time_text = time.get_text()
+            overall_place = time.next.next.next
+            overall_place_text = overall_place.get_text()
+            div_place = overall_place.next.next.next
+            age_div = div_place.get_text()
+            div = div_place.next.next.next
+            net_time_text = div.get_text()
+            origin = div.next.next.next
+            origin_text = origin.get_text()
+        elif race[1] == 0:
+            pass # NEED TO WRITE THIS
         # we only need name, age_div, and time
         
         current_entry = current_entry.next_sibling.next_sibling
@@ -152,7 +160,7 @@ def go(race):
     Given a race id, this function generates a csv file of the result of this race
 
     Intput: 
-        race: (string) race name
+        race (tuple): race name and format of table
     '''
     
     num_participants = get_num_participants(race)
