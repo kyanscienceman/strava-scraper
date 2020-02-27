@@ -48,7 +48,7 @@ def get_num_participants(race):
     Get the number of participants of a race
 
     Input: 
-        race (tuple): race name and format of table
+        race (str): race name
 
     Output: 
         (int) number of parcipants in this race
@@ -67,7 +67,7 @@ def get_race_ranges(num_participants):
     Given a number of participants, this function returns a list of ranges of pages.
 
     Input:
-        race (tuple): race name and format of table
+        num_participants (int): number of participants in race
 
     Output:
         list of tuples, such as [(1,100), (101,176)]
@@ -125,7 +125,7 @@ def get_result_in_one_page(soup, race):
 
     Input: 
         soup: (soup) webpage of result
-        race (tuple): race name and format of table
+        race (str): race name
 
     Output: 
         info_lst: (list) list of participants' result in this page
@@ -138,19 +138,26 @@ def get_result_in_one_page(soup, race):
     while current_entry != None:
         name = current_entry.find("td").get_text()
         name = re.findall('(.+)\ \(', name)[0]
-        if race[1] == 1:
-            time = current_entry.find("td").next.next.next
-            time_text = time.get_text()
-            overall_place = time.next.next.next
-            overall_place_text = overall_place.get_text()
-            div_place = overall_place.next.next.next
+        time = current_entry.find("td").next.next.next
+        time_text = time.get_text()
+        overall_place = time.next.next.next
+        overall_place_text = overall_place.get_text()
+        div_place = overall_place.next.next.next
+        if dict_of_race[race][1] == 1:
             age_div = div_place.get_text()
             div = div_place.next.next.next
             net_time_text = div.get_text()
             origin = div.next.next.next
             origin_text = origin.get_text()
-        elif race[1] == 0:
-            pass # NEED TO WRITE THIS
+        elif dict_of_race[race][1] == 0:
+            div_place_text = div_place.get_text()
+            div = div_place.next.next.next
+            age_div = div.get_text()
+            origin = div.next.next.next
+            origin_text = origin.get_text()
+            ag_time = origin.next.next.next
+            net_time_text = ag_time.get_text()
+
         # we only need name, age_div, and time
         
         current_entry = current_entry.next_sibling.next_sibling
@@ -164,7 +171,7 @@ def go(race):
     Given a race id, this function generates a csv file of the result of this race
 
     Intput: 
-        race (tuple): race name and format of table
+        race (str): race name
     '''
     
     num_participants = get_num_participants(race)
@@ -175,7 +182,7 @@ def go(race):
         for race_range in range_lst: 
             print(race_range)
             soup = get_soup_of_range(race, race_range)
-            info_lst = get_result_in_one_page(soup)
+            info_lst = get_result_in_one_page(soup, race)
             for info in info_lst:
                 result_writer.writerow(info)
 
