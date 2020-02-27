@@ -11,8 +11,7 @@ import sys
 # format of the dictionary:
 # "Race Name": (Race ID, Format of Page)
 # Format of Page == 0 for Old Format, == 1 for New Format)
-# Old format for Chicago 2017 and before
-# New format for New York 2017 and after
+# London also has a different format, but we may not get to it since we also have to scrape strava
 
 dict_of_race = {
     "Chicago2019": (67191013, 1),
@@ -32,7 +31,10 @@ dict_of_race = {
     "Boston2017": (15170417, 0),
     "Boston2016": (15160418, 0),
     "Boston2015": (15150420, 0),
-    "Boston2014": (15140421, 0),
+    "Boston2014": (15140421, 0)
+}
+
+dict_of_race_extra = {
     "London2019": (16190428, 1),
     "London2018": (16180422, 1),
     "London2017": (16170423, 0),
