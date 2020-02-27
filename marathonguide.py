@@ -116,7 +116,8 @@ def get_soup_of_range(race, race_range):
 
     return soup
 
-
+def next_tag(tag):
+    return tag.next.next.next
 
 def get_result_in_one_page(soup, race):
     '''
@@ -135,8 +136,23 @@ def get_result_in_one_page(soup, race):
     current_entry = entries[0]
     
     info_lst = []
+
     while current_entry != None:
-        name = current_entry.find("td").get_text()
+        tag = current_entry.find("td")
+        name = tag.get_text()
+        name = re.findall('(.+)\ \(', name)[0]
+        tag_lst = []
+        while next_tag(tag) != '\n':
+            tag = next_tag(tag)
+            tag_lst.append(tag)
+        for tag in tag_lst: 
+            tag_text = tag.get_text()
+            if ":" in tag_text: 
+                time = tag_text
+            elif tag_text[0] == "F" or tag_text[0] == "M":
+                if tag_text[1].isnumeric():
+                    div = tag_text
+                '''
         name = re.findall('(.+)\ \(', name)[0]
         time = current_entry.find("td").next.next.next
         time_text = time.get_text()
@@ -159,9 +175,9 @@ def get_result_in_one_page(soup, race):
             net_time_text = ag_time.get_text()
 
         # we only need name, age_div, and time
-        
+        '''
         current_entry = current_entry.next_sibling.next_sibling
-        info_lst.append((name, age_div, net_time_text))
+        info_lst.append((name, div, time))
 
     return info_lst
 
