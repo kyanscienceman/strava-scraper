@@ -11,8 +11,7 @@ import sys
 # format of the dictionary:
 # "Race Name": (Race ID, Format of Page)
 # Format of Page == 0 for Old Format, == 1 for New Format)
-# Old format for Chicago 2017 and before
-# New format for New York 2017 and after
+# London also has a different format, but we may not get to it since we also have to scrape strava
 
 dict_of_race = {
     "Chicago2019": (67191013, 1),
@@ -32,7 +31,10 @@ dict_of_race = {
     "Boston2017": (15170417, 0),
     "Boston2016": (15160418, 0),
     "Boston2015": (15150420, 0),
-    "Boston2014": (15140421, 0),
+    "Boston2014": (15140421, 0)
+}
+
+dict_of_race_extra = {
     "London2019": (16190428, 1),
     "London2018": (16180422, 1),
     "London2017": (16170423, 0),
@@ -46,7 +48,7 @@ def get_num_participants(race):
     Get the number of participants of a race
 
     Input: 
-        race (str): race name
+        race (tuple): race name and format of table
 
     Output: 
         (int) number of parcipants in this race
@@ -65,7 +67,7 @@ def get_race_ranges(num_participants):
     Given a number of participants, this function returns a list of ranges of pages.
 
     Input:
-        num_participants (int): number of participants in race
+        race (tuple): race name and format of table
 
     Output:
         list of tuples, such as [(1,100), (101,176)]
@@ -123,7 +125,7 @@ def get_result_in_one_page(soup, race):
 
     Input: 
         soup: (soup) webpage of result
-        race (str): race name
+        race (tuple): race name and format of table
 
     Output: 
         info_lst: (list) list of participants' result in this page
@@ -136,26 +138,19 @@ def get_result_in_one_page(soup, race):
     while current_entry != None:
         name = current_entry.find("td").get_text()
         name = re.findall('(.+)\ \(', name)[0]
-        time = current_entry.find("td").next.next.next
-        time_text = time.get_text()
-        overall_place = time.next.next.next
-        overall_place_text = overall_place.get_text()
-        div_place = overall_place.next.next.next
-        if dict_of_race[race][1] == 1:
+        if race[1] == 1:
+            time = current_entry.find("td").next.next.next
+            time_text = time.get_text()
+            overall_place = time.next.next.next
+            overall_place_text = overall_place.get_text()
+            div_place = overall_place.next.next.next
             age_div = div_place.get_text()
             div = div_place.next.next.next
             net_time_text = div.get_text()
             origin = div.next.next.next
             origin_text = origin.get_text()
-        elif dict_of_race[race][1] == 0:
-            div_place_text = div_place.get_text()
-            div = div_place.next.next.next
-            age_div = div.get_text()
-            origin = div.next.next.next
-            origin_text = origin.get_text()
-            ag_time = origin.next.next.next
-            net_time_text = ag_time.get_text()
-
+        elif race[1] == 0:
+            pass # NEED TO WRITE THIS
         # we only need name, age_div, and time
         
         current_entry = current_entry.next_sibling.next_sibling
@@ -169,7 +164,7 @@ def go(race):
     Given a race id, this function generates a csv file of the result of this race
 
     Intput: 
-        race (str): race name
+        race (tuple): race name and format of table
     '''
     
     num_participants = get_num_participants(race)
@@ -180,7 +175,7 @@ def go(race):
         for race_range in range_lst: 
             print(race_range)
             soup = get_soup_of_range(race, race_range)
-            info_lst = get_result_in_one_page(soup, race)
+            info_lst = get_result_in_one_page(soup)
             for info in info_lst:
                 result_writer.writerow(info)
 
