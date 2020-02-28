@@ -53,9 +53,9 @@ LOGIN_PASSWORD = "2hourmarathon"
 L_STR = 'uchistrava{}@gmail.com'
 LOGIN_EMAILS = [L_STR.format('+'+str(i)) for i in range(1, 31)]
 FIELDNAMES = ["RaceID", "Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
-with open('CSIL_IPS.csv', newline='') as f:
-    reader = csv.reader(f)
-    CSIL_IPS = [r[0] for r in reader]
+# with open('CSIL_IPS.csv', newline='') as f:
+#     reader = csv.reader(f)
+#     CSIL_IPS = [r[0] for r in reader]
 
 CHROME_PATH = '/usr/bin/google-chrome'
 # CHROMEDRIVER_PATH = '~/three-plus-one/chromedriver'
