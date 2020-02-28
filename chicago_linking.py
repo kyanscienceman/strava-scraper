@@ -12,7 +12,7 @@ RACE_DICT = {
     'CH16': ['Chicago2016official.csv', 'strava_chicago_2016.csv'], 
     'CH17': ['Chicago2017official.csv', 'strava_chicago_2017.csv'],
     'CH18': ['Chicago2018official.csv', 'strava_chicago_2018.csv'],
-    'CH19': ['Chicago2019official.csv', 'strava_chicago_2019.csv']
+    'CH19': ['Chicago2019official.csv', 'strava_chicago_2019.csv'],
     'NY17': ['NewYork2017official.csv', 'strava_newyork_2017.csv'],
     'NY18': ['NewYork2018official.csv', 'strava_newyork_2018.csv'],
     'NY19': ['NewYork2019official.csv', 'strava_newyork_2019.csv'],
@@ -21,7 +21,7 @@ RACE_DICT = {
     'BS16': ['Boston2016official.csv', 'strava_boston_2016.csv'],
     'BS17': ['Boston2017official.csv', 'strava_boston_2017.csv'],
     'BS18': ['Boston2018official.csv', 'strava_boston_2018.csv'],
-    'BS19': ['Boston2019official.csv', 'strava_boston_2019.csv'],} 
+    'BS19': ['Boston2019official.csv', 'strava_boston_2019.csv']} 
 
 def create_marathon_df(raceID):
     '''
