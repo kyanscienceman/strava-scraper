@@ -51,7 +51,7 @@ LOGIN_URL = BASE_URL + "/login"
 #LOGIN_EMAIL = "stravascraper123@mail.com"
 LOGIN_PASSWORD = "2hourmarathon"
 L_STR = 'uchistrava{}@gmail.com'
-LOGIN_EMAILS = [L_STR.format('+'+str(i)) for i in range(1, 21)]
+LOGIN_EMAILS = [L_STR.format('+'+str(i)) for i in range(1, 31)]
 FIELDNAMES = ["RaceID", "Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
 with open('CSIL_IPS.csv', newline='') as f:
     reader = csv.reader(f)
@@ -255,4 +255,14 @@ if __name__=="__main__":
     filename = sys.argv[1]
     race_id = sys.argv[2]
     start_page_num = int(sys.argv[3])
+    scraper = sys.argv[4]
+    if scraper == "Kevin":
+        LOGIN_EMAILS = LOGIN_EMAILS[:7]
+    elif scraper == "Peter":
+        LOGIN_EMAILS = LOGIN_EMAILS[7:15]
+    elif scraper == "Xingyu":
+        LOGIN_EMAILS = LOGIN_EMAILS[15:23]
+    else:
+        LOGIN_EMAILS = LOGIN_EMAILS[24:]
+    print(LOGIN_EMAILS)
     strava_scrape(filename, race_id, start_page_num)
