@@ -20,12 +20,18 @@ from selenium.webdriver.chrome.options import Options
 
 BASE_URL = "https://www.strava.com"
 MARATHON_IDS = {
-    'CH14': ('2014-12-10', 'Chicago'),
-    'CH15': ('2015-11-10', 'Chicago'),
-    'CH16': ('2016-09-10', 'Chicago'),
-    'CH17': ('2017-08-10', 'Chicago'),
-    'CH18': ('2018-07-10', 'Chicago'),
-    'CH19': ('2019-13-10', 'Chicago')
+    'CH14': ('2014-10-12', 'Chicago'),
+    'CH15': ('2015-10-11', 'Chicago'),
+    'CH16': ('2016-10-09', 'Chicago'),
+    'CH17': ('2017-10-08', 'Chicago'),
+    'CH18': ('2018-10-07', 'Chicago'),
+    'CH19': ('2019-10-13', 'Chicago'), 
+    'NY14': ("2019-11-02", "New York"),
+    "NY15": ("2015-11-01", "New York"),
+    "NY16": ("2016-11-06", "New York"),
+    'NY17': ("2017-11-05", "New York"),
+    "NY18": ("2018-11-04", "New York"),
+    "NY19": ("2019-11-03", "New York")
 }
 MARATHON_PAGES = {
     'CH14': 'https://www.strava.com/running_races/2014-chicago-marathon/results?page={}',
@@ -33,7 +39,13 @@ MARATHON_PAGES = {
     'CH16': 'https://www.strava.com/running_races/2016-chicago-marathon/results?page={}',
     'CH17': 'https://www.strava.com/running_races/2017-chicago-marathon/results?page={}',
     'CH18': 'https://www.strava.com/running_races/2153/results?page={}',
-    'CH19': 'https://www.strava.com/running_races/2782/results?page={}'
+    'CH19': 'https://www.strava.com/running_races/2782/results?page={}',
+    'NY14': 'https://www.strava.com/running_races/32/results?page={}',
+    'NY15': 'https://www.strava.com/running_races/302/results?page={}',
+    'NY16': 'https://www.strava.com/running_races/659/results?page={}' ,
+    'NY17': 'https://www.strava.com/running_races/878/results?page={}',
+    'NY18': 'https://www.strava.com/running_races/2132/results?page={}',
+    'NY19': 'https://www.strava.com/running_races/2904/results?page={}'
 }
 LOGIN_URL = BASE_URL + "/login"
 #LOGIN_EMAIL = "stravascraper123@mail.com"
