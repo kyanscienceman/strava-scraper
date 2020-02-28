@@ -195,7 +195,7 @@ def strava_scrape(filename, race_id, start_page_num):
             a_url = a.find("td", class_="athlete-activity").find(href=True)["href"]
             a_url = urlutil.convert_if_relative_url(BASE_URL, a_url)
 
-            print(marathon_page, "activity", counter)
+            print(marathon_page, "\n", "Page", page_num, "Activity", counter)
             counter += 1
 
             #Navigate to the activities page and check for privacy settings 
