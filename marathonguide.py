@@ -112,7 +112,7 @@ def get_soup_of_range(race, race_range):
     "User-Agent":"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.116 Safari/537.36"
     }
     results = s.post(rp, data=data, headers=headers)
-    soup = bs4.BeautifulSoup(results.content, features='lxml')
+    soup = bs4.BeautifulSoup(results.content, features='html5lib', from_encoding="utf-8")
 
     return soup
 
@@ -138,13 +138,16 @@ def get_result_in_one_page(soup, race):
     info_lst = []
 
     while current_entry != None:
+        print(current_entry)
         tag = current_entry.find("td")
         name = tag.get_text()
         name = re.findall('(.+)\ \(', name)[0]
         tag_lst = []
-        while next_tag(tag) != '\n':
-            tag = next_tag(tag)
+        tag = next_tag(tag)
+        while tag != '\n' or tag != None or tag != '\n\n':
+            print("THIS IS TAGGGGGG", tag)
             tag_lst.append(tag)
+            tag = next_tag(tag)
         for tag in tag_lst: 
             tag_text = tag.get_text()
             if ":" in tag_text: 
