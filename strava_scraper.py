@@ -122,8 +122,8 @@ def strava_scrape(filename, race_id, start_page_num):
             activity_list = []
 
         for a in activities:
-            counter += 1
             print(marathon_page, "\nPage", page_num, "Activity", counter)
+            counter += 1
             
             #Find the url of the activities page for this athlete's run 
             a_url = a.find("td", class_="athlete-activity").find(href=True)["href"]
@@ -172,9 +172,6 @@ def strava_scrape(filename, race_id, start_page_num):
 
         #Move to the next page of marathon results
         page_num += 1
-            
-    #When we are done with all the marathons, close the selenium driver
-    #driver.close()
 
 
 if __name__=="__main__":
