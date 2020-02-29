@@ -108,8 +108,8 @@ def strava_scrape(filename, race_id, start_page_num):
         driver.get(marathon_page.format(page_num))
         soup = bs4.BeautifulSoup(driver.page_source, 'lxml')
 
-        #If this is the first page, find what the last page number is
-        if page_num == 1:
+        #If this is the first page we have scraped, find what the last page number is
+        if page_num == start_page_num:
             li = soup.find("li", class_="next_page")
             n = li.previous_sibling.previous_sibling.findChild().text
             last_page_num = int(n)
