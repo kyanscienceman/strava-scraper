@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 import numpy as numpy
 import jellyfish
@@ -33,15 +34,19 @@ def create_marathon_df(raceID):
         marathon_df (DataFrame) 
     '''
 
-    filename = RACE_DICT[raceID][0] #need to standardize these names
+    print(RACE_DICT[raceID][0])
+    filename = "race_result/" + RACE_DICT[raceID][0] #need to standardize these names
 
     marathon_df = pd.read_csv(filename, header=None) #read without a header because the first row of csv contains real data
     marathon_df.columns = ['Name', 'Gender_and_Age', 'Time']
-    marathon_df['Gender'] = marathon_df.gender_and_age.str[0]
-    marathon_df['Age'] = marathon_df.gender_and_age.str[1:]
-    marathon_df = marathon_df.drop['Gender_and_Age']
+    marathon_df['Gender'] = marathon_df['Gender_and_Age'].str[0]
+    marathon_df['Age'] = marathon_df['Gender_and_Age'].str[1:]
+    marathon_df = marathon_df.drop(columns=['Gender_and_Age'])
     marathon_df['RaceID'] = raceID
-    cols = ['RaceID', 'Name', 'Gender', 'Age'] #trying to reorder rows here
+    marathon_df['Age_Lower'] = marathon_df['Age'].str.extract('(\d+)-')
+    marathon_df['Age_Upper'] = marathon_df['Age'].str.extract('-(\d+)')
+
+    marathon_df = convert_to_seconds(marathon_df)
 
     return marathon_df
 
@@ -55,13 +60,31 @@ def create_strava_df(raceID):
         strava_df_list (list) list of DataFrame objects 
     '''
 
-    filename = RACE_DICT[raceID][1] #need to standardize these names
+    filename = "race_result/" + RACE_DICT[raceID][1] #need to standardize these names
 
     strava_df = pd.read_csv(filename, sep='|')
+    strava_df['Time'] = strava_df['Time1']
+    strava_df = strava_df.drop(columns=['Time1', 'Time2'])
+    strava_df = strava_df[strava_df['Time'].str.contains("^\d:")]
+
+    strava_df = convert_to_seconds(strava_df)
+    strava_df['Age_Lower'] = strava_df['Age'].str.extract('(\d+)-')
+    strava_df['Age_Upper'] = strava_df['Age'].str.extract('-(\d+)')
+    #strava_df = strava_df[strava_df['Shoes'].isna() == False]
 
     return strava_df
 
-def create_matches(raceID, acceptable_time_diff, acceptable_name_diff):
+def convert_to_seconds(df):
+    '''
+    Take in df and return it with the time column converted to seconds
+    '''
+
+    df['Time'] = df.apply(lambda row: time.strptime(row.loc['Time'], '%H:%M:%S'), axis=1)
+    df['Time'] = df.apply(lambda row: row.loc['Time'].tm_hour * 3600 + row.loc['Time'].tm_min * 60 + row.loc['Time'].tm_sec, axis=1)
+
+    return df
+
+def create_matches(raceID, acceptable_name_score=0.85):
     '''
     Takes in a race ID and returns a dataframe of acceptable matches based on a passed acceptable time difference score and an acceptable namedifference score
 
@@ -70,7 +93,7 @@ def create_matches(raceID, acceptable_time_diff, acceptable_name_diff):
         acceptable_time_diff (int) difference in seconds that you'd still consider a match
         acceptable_name_diff (int) Between 0-1, acceptable jaro-winkler score
     Returns:
-        matches
+        matches (DataFrame)
     '''
 
     marathon_df = create_marathon_df(raceID)
@@ -80,33 +103,39 @@ def create_matches(raceID, acceptable_time_diff, acceptable_name_diff):
     m_match_indexes = []
 
     for s_index, s_row in strava_df.iterrows():
-        for m_index, m_row in marathon_df.iterrows():
-            strava_name = s_row[1]
-            marathon_name = m_row[0]
-            strava_time = s_row[4]
-            marathon_time = m_row[2]
+        strava_time = s_row.at['Time']
+        strava_name = s_row.at['Name']
+        strava_gender = s_row.at['Gender']
+        strava_age_lower = s_row.at['Age_Lower']
+        strava_age_upper = s_row.at['Age_Upper']
 
-            marathon_time_obj = time.strptime(marathon_time, '%H:%M:%S')
-            marathon_hour = marathon_time_obj.tm_hour
-            marathon_min = marathon_time_obj.tm_min
-            marathon_sec = marathon_time_obj.tm_sec
-            marathon_time = (marathon_hour * 3600) + (marathon_min * 60) + marathon_sec
+        strava_age_present = isinstance(strava_age_lower, str)
+        if strava_age_present:
+            strava_age_lower = int(strava_age_lower)
+            strava_age_upper = int(strava_age_upper)
 
-            strava_time_obj = time.strptime(strava_time, '%H:%M:%S')
-            strava_hour = strava_time_obj.tm_hour
-            strava_min = strava_time_obj.tm_min
-            strava_sec = strava_time_obj.tm_sec
-            strava_time = (strava_hour * 3600) + (strava_min * 60) + strava_sec
+        searchable_marathon_df = marathon_df[(marathon_df['Time'] <= strava_time + 60) & (marathon_df['Time'] >= strava_time - 60) & (marathon_df['Gender'] == strava_gender)]
+        
+        for m_index, m_row in searchable_marathon_df.iterrows():
+            marathon_age_lower = m_row.at['Age_Lower']
+            marathon_age_upper = m_row.at['Age_Upper']
+            if strava_age_present:
+                marathon_age_lower = int(marathon_age_lower)
+                marathon_age_upper = int(marathon_age_upper)
+                if marathon_age_lower >= strava_age_upper or strava_age_lower >= marathon_age_upper:
+                    continue
+
+            print('s_index:', s_index, 'm_index:', m_index)
+            marathon_name = m_row.at['Name']
 
             name_score = jellyfish.jaro_winkler(strava_name, marathon_name)
-            time_diff = marathon_time - strava_time #Calculates seconds diff
-
-            if (name_score >= acceptable_name_diff and time_diff <= acceptable_time_diff):
+            if name_score >= acceptable_name_score:
                 s_match_indexes.append(s_index)
                 m_match_indexes.append(m_index)
+                break
 
-    s_matches_half = strava_df.loc[s_match_indexes, :]
-    s_matches_half.columns = 
+    matches = pd.concat([strava_df.loc[s_match_indexes].reset_index(drop=True), marathon_df.loc[m_match_indexes].reset_index(drop=True)], axis=1)
 
-    #Take indexes and append the rows from each dataframe according to those indexes
+    return matches
+
 
