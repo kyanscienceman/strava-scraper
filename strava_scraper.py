@@ -132,9 +132,6 @@ def strava_scrape(filename, race_id, start_page_num):
             activity_list = []
 
         for a in activities:
-            print(race_id, "Page", page_num, "Activity", counter)
-            counter += 1
-            
             #Find the url of the activities page for this athlete's run 
             a_url = a.find("td", class_="athlete-activity").find(href=True)["href"]
             a_url = urlutil.convert_if_relative_url(BASE_URL, a_url)
@@ -169,6 +166,10 @@ def strava_scrape(filename, race_id, start_page_num):
             attr_dict['Time2'] = stats.find_all("li")[1].find("strong").text
 
             activity_list.append(attr_dict)
+
+            #Debugging print statements
+            print(race_id, "Page", page_num, "Activity", counter)
+            counter += 1
 
         #Write this information to the specified CSV file, every 10 pages
         if page_num % 10 == 0 or page_num == last_page_num:
