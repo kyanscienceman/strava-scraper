@@ -122,7 +122,7 @@ def strava_scrape(filename, race_id, start_page_num):
             activity_list = []
 
         for a in activities:
-            print(race_id, "\nPage", page_num, "Activity", counter)
+            print(race_id, "Page", page_num, "Activity", counter)
             counter += 1
             
             #Find the url of the activities page for this athlete's run 
