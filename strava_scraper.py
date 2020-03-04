@@ -173,6 +173,7 @@ def strava_scrape(filename, race_id, start_page_num):
 
         #Write this information to the specified CSV file, every 10 pages
         if page_num % 10 == 0 or page_num == last_page_num:
+            print("writing to csv...")
             with open(filename, 'a') as csvfile:
                 writer = csv.DictWriter(csvfile, fieldnames=FIELDNAMES, delimiter='|')
                 writer.writerows(activity_list)
