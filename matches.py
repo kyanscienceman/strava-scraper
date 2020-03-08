@@ -7,22 +7,17 @@ import time
 
 ### NOTE: I have named this file chicago_linking, but it most likely can be used for linking any marathon considering we format all of our scrapes the same way
 
-RACE_DICT = {
-    'CH14': ['ChicagoOfficial2014.csv', 'strava_chicago_2014.csv'], 
-    'CH15': ['ChicagoOfficial2014.csv', 'strava_chicago_2015.csv'], 
-    'CH16': ['Chicago2016official.csv', 'strava_chicago_2016.csv'], 
-    'CH17': ['Chicago2017official.csv', 'strava_chicago_2017.csv'],
-    'CH18': ['Chicago2018official.csv', 'strava_chicago_2018.csv'],
-    'CH19': ['Chicago2019official.csv', 'strava_chicago_2019.csv'],
-    'NY17': ['NewYork2017official.csv', 'strava_newyork_2017.csv'],
-    'NY18': ['NewYork2018official.csv', 'strava_newyork_2018.csv'],
-    'NY19': ['NewYork2019official.csv', 'strava_newyork_2019.csv'],
-    'BS14': ['Boston2014official.csv', 'strava_boston_2014.csv'],
-    'BS15': ['Boston2015official.csv', 'strava_boston_2015.csv'],
-    'BS16': ['Boston2016official.csv', 'strava_boston_2016.csv'],
-    'BS17': ['Boston2017official.csv', 'strava_boston_2017.csv'],
-    'BS18': ['Boston2018official.csv', 'strava_boston_2018.csv'],
-    'BS19': ['Boston2019official.csv', 'strava_boston_2019.csv']} 
+RACE_DICT = {}
+
+
+D = {"CH": "Chicago", "NY":"NewYork", "BS":"Boston"}
+for city in D.keys():
+    for year in range(14,20):
+        RACE_ID = city + str(year)
+        full_name = D[city]
+        full_year = "20" + str(year)
+        RACE_DICT[RACE_ID] = [full_name + full_year + "official.csv", "strava_" + full_name.lower() + "_" + full_year + ".csv"]
+
 
 def create_marathon_df(raceID):
     '''
@@ -115,7 +110,7 @@ def create_matches(raceID, acceptable_name_score=0.85):
             strava_age_upper = int(strava_age_upper)
 
         searchable_marathon_df = marathon_df[(marathon_df['Time'] <= strava_time + 60) & (marathon_df['Time'] >= strava_time - 60) & (marathon_df['Gender'] == strava_gender)]
-        
+        print(s_index)
         for m_index, m_row in searchable_marathon_df.iterrows():
             marathon_age_lower = m_row.at['Age_Lower']
             marathon_age_upper = m_row.at['Age_Upper']
@@ -125,7 +120,7 @@ def create_matches(raceID, acceptable_name_score=0.85):
                 if marathon_age_lower >= strava_age_upper or strava_age_lower >= marathon_age_upper:
                     continue
 
-            print('s_index:', s_index, 'm_index:', m_index)
+            # print('s_index:', s_index, 'm_index:', m_index)
             marathon_name = m_row.at['Name']
 
             name_score = jellyfish.jaro_winkler(strava_name, marathon_name)
@@ -138,4 +133,17 @@ def create_matches(raceID, acceptable_name_score=0.85):
 
     return matches
 
+def go():
+    '''
+    This function trims the data for each race, combine them, and write them
+    to a sql database table
+    '''
+    for race_ID in RACE_DICT.keys():
+        df = create_matches(race_ID, 0.85)
+        df = df.iloc[:,[0,8,9,10,4]]
+        df.iloc[:,6] = df.iloc[:,6].fillna(0)
+        df.iloc[:,7] = df.iloc[:,7].fillna(120)
 
+
+if __name__ == "__main__":
+    go()
