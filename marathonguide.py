@@ -135,9 +135,11 @@ def get_result_in_one_page(soup):
 
     while current_entry != None:
         tag = current_entry.find("td")
-        name = tag.get_text()
-        name = re.findall('(.+)\ \(', name)[0]
+        text = tag.get_text()
+        name = re.findall('(.+)\ \(', text)[0]
+        gender = re.findall('\((.)',text)[0]
         tag_lst = []
+        div = gender + "0-120"
         while "\n" not in next_tag(tag) : # or tag != None or tag != '\n\n':
             tag = next_tag(tag)
             tag_lst.append(tag)
@@ -146,7 +148,7 @@ def get_result_in_one_page(soup):
             if ":" in tag_text: 
                 time = tag_text
             elif tag_text[0] == "F" or tag_text[0] == "M":
-                if tag_text[1].isnumeric() or tag_text[1] == "E":
+                if tag_text[1].isnumeric() or tag_text[1:3] == "El":
                     div = tag_text
         current_entry = current_entry.next_sibling.next_sibling
         info_lst.append((name, div, time))
