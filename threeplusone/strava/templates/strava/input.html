@@ -1,19 +1,12 @@
-<html>
-    <head>
-    </head>
-    <body>
-        <h1>Average Marathon Time for Cohort</h1>
+{% extends "strava/base.html" %}
 
-        {% if error_message %}
-        <p><strong>{{ error_message }}</strong></p>
-        {% endif %}
+{% block title %}Search Within Cohort{% endblock %}
 
-        <form action="{% url 'results' %}" method="get">
-            {% csrf_token %}
-            <table>
-            {{ form }}
-            </table>
-            <input type="submit" value="Submit"/>
-        </form>
-    </body>
-</html>
+{% block body_main %}
+<h1>Search Within Cohort</h1>
+<form action="{% url 'results' %}" method="get">
+    {% csrf_token %}
+    <table>{{ form }}</table>
+    <input type="submit" value="Submit"/>
+</form>
+{% endblock %}

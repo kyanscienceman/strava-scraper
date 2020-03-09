@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>
+        {% block title %}
+        Overheard in Cavs locker room after Game 7: "He got me," LeBron said of Tatum's dunk over him. "That f***ing Tatum boomed me." LeBron added, "He’s so good," repeating it four times. LeBron then said he wanted to add Tatum to the list of players he works out with this summer.
+        {% endblock %}
+    </title>
+</head>
+<body>
+    <div id="navbar">
+        {% block navbar %}
+        {% endblock %}
+    </div>
+
+    <div id="error_msg">
+        {% if error %}
+        <p><strong>{{ error }}</strong></p>
+        {% endif %}
+    </div>
+
+    <div id="body_main">
+        {% block body_main %}
+        {{ form }}
+        {% endblock %}
+    </div>
+
+</body>
+</html>

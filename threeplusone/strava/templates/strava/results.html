@@ -1,28 +1,15 @@
-<html>
-    <head>
-        <title>Results</title>
-    </head>
-    <body>
-        {% if error %}
-        <h1> Sorry you did something wrong??</h1>
-        {% else %}
-        <h1>Average Marathon Time</h1>
-        <p>
-            Runners in your cohort:
-            <br>
+{% extends "strava/base.html" %}
 
-            {% if age %}
-            Age: {{ age }}
-            <br>
-            {% endif %}
+{% block title %}Results{% endblock %}
 
-            {% if sex %}
-            Sex: {{ sex }}
-            <br>
-            {% endif %}
-
-            had average marathon times of {{ avg_time }}.
-        </p>
-        {% endif %}
-    </body>
-</html>
+{% block body_main %}
+<h1>Average Marathon Time</h1>
+<p>Runners in your cohort:</p>
+<ul>
+    {% if sex == "M" %}<li>Male{% endif %}
+    {% if sex == "F" %}<li>Female{% endif %}
+    {% if age %}<li>Around {{ age }} years of age {% endif %}
+    {% if not age and not sex %}<li>All runners in database{% endif %}
+</ul>
+<p>had average marathon times of {{ avg_time }}.</p>
+{% endblock %}
