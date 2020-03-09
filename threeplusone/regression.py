@@ -11,7 +11,7 @@ import seaborn as seabornInstance
 from sklearn.model_selection import train_test_split 
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
-#import statsmodels.api as sm
+import statsmodels.api as sm #sudo python setup.py install
 #%matplotlib inline
 
 CHECKS = ["%", "vf", "fly", "next", "vapor", "vapour", "percent"]
@@ -43,7 +43,8 @@ def average_marathon_time(race=None, sex=None, age=None):
         assert sex in SEXES
         marathon_df = marathon_df[marathon_df["Gender"] == sex]
     if age is not None:
-        marathon_df = marathon_df[(marathon_df["Age_Lower"] <= age) & (marathon_df["Age_Upper"] >= age)]
+        marathon_df = marathon_df[(marathon_df["Age_Lower"] <= age) & \
+        (marathon_df["Age_Upper"] >= age)]
 
     return marathon_df["Time"].mean()
 
@@ -76,7 +77,7 @@ def find_vaporfly(filename):
     return marathon_df
 
 
-def regressions(filename, race=None, sex=None, age=None, time=False):
+def regressions(filename, race=None, sex=None, age=None, time=None):
     '''
     Function that takes in a filename and various demographic
     data points inputted by the user to spit out a coefficient and
@@ -91,7 +92,7 @@ def regressions(filename, race=None, sex=None, age=None, time=False):
         time (int): time to complete a marathon
 
     Returns:
-
+        
     '''
     marathon_df = find_vaporfly(filename)
 
@@ -102,7 +103,10 @@ def regressions(filename, race=None, sex=None, age=None, time=False):
         assert sex in SEXES
         marathon_df = marathon_df[marathon_df["Gender"] == sex]
     if age is not None:
-        marathon_df = marathon_df[(marathon_df["Age_Lower"] <= age) & (marathon_df["Age_Upper"] >= age)]
+        marathon_df = marathon_df[(marathon_df["Age_Lower"] <= age) & \
+        (marathon_df["Age_Upper"] >= age)]
+
+    # Need to convert time into seconds and then back to HH:MM:SS
 
     marathon_df = marathon_df.dropna() # drop NAs and last 50 rows for outliers
     marathon_df["Vaporfly"].astype("category") # change to categorical variables
@@ -114,26 +118,34 @@ def regressions(filename, race=None, sex=None, age=None, time=False):
     
     print("The linear model is: Y = {:.5} + {:.5}X".format(reg.intercept_[0], \
      reg.coef_[0][0]))
+
+    improvement = reg.coef_[0][0]
+
+    if time is not None:
+        newtime = time + improvement
+        print("If you bought the Vaporflies, you would improve your time from", \
+        "{} to {}, increasing your finish time by {} percent".format(time, newtime, \
+            (1-newtime/time)*100))
     
-    # X2 = sm.add_constant(X)
-    # est = sm.OLS(y, X2)
-    # est2 = est.fit()
-    # print(est2.summary())
+    X2 = sm.add_constant(X)
+    est = sm.OLS(y, X2)
+    est2 = est.fit()
+    print(est2.summary())
 
     predictions = reg.predict(X)
 
     plt.figure(figsize=(16, 8))
     plt.scatter(
-    	marathon_df["Vaporfly"],
+        marathon_df["Vaporfly"],
         marathon_df["Time"],
         c="black"
     )
-    # plt.plot(
-    # marathon_df["Vaporfly"],
-    # predictions,
-    # c="blue",
-    # linewidth=2
-    # )
+    plt.plot(
+    marathon_df["Vaporfly"],
+    predictions,
+    c="blue",
+    linewidth=2
+    )
     plt.xlabel("Presence of Vaporfly")
     plt.ylabel("Marathon Times")
     plt.show()
