@@ -2,8 +2,9 @@
 
 {% block title %}Search Within Cohort{% endblock %}
 
+{% block body_title %}<h1>Search Within Cohort</h1>{% endblock %}
+
 {% block body_main %}
-<h1>Search Within Cohort</h1>
 <form action="{% url 'results' %}" method="get">
     {% csrf_token %}
     <table>{{ form }}</table>
