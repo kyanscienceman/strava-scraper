@@ -4,8 +4,9 @@ import numpy as numpy
 import jellyfish
 import datetime
 import time
+import sys
+import os
 
-### NOTE: I have named this file chicago_linking, but it most likely can be used for linking any marathon considering we format all of our scrapes the same way
 
 RACE_DICT = {}
 
@@ -16,7 +17,8 @@ for city in D.keys():
         RACE_ID = city + str(year)
         full_name = D[city]
         full_year = "20" + str(year)
-        RACE_DICT[RACE_ID] = [full_name + full_year + "official.csv", "strava_" + full_name.lower() + "_" + full_year + ".csv"]
+        RACE_DICT[RACE_ID] = [
+        full_name + full_year + "official.csv", "strava_" + full_name.lower() + "_" + full_year + ".csv"]
 
 
 def create_marathon_df(raceID):
@@ -28,12 +30,22 @@ def create_marathon_df(raceID):
     Returns:
         marathon_df (DataFrame) 
     '''
-
     print(RACE_DICT[raceID][0])
     filename = "race_result/" + RACE_DICT[raceID][0] #need to standardize these names
 
-    marathon_df = pd.read_csv(filename, header=None) #read without a header because the first row of csv contains real data
+    marathon_df = pd.read_csv(filename, header=None) 
+    #read without a header because the first row of csv contains real data
     marathon_df.columns = ['Name', 'Gender_and_Age', 'Time']
+
+    # Some official results from marathonguide.com are capitalized
+    # We need to adjust the format so that the Jaro-Winkler algorithms 
+    # won't give us 0 scores. 
+    name = marathon_df.iloc[1,0]
+    if name.isupper():
+        f = lambda s: s.title()
+        marathon_df["Name"] = marathon_df["Name"].apply(f)
+    
+
     marathon_df['Gender'] = marathon_df['Gender_and_Age'].str[0]
     marathon_df['Age'] = marathon_df['Gender_and_Age'].str[1:]
     marathon_df['RaceID'] = raceID
@@ -43,11 +55,15 @@ def create_marathon_df(raceID):
 
     marathon_df = convert_to_seconds(marathon_df)
 
-    marathon_df.columns = ['m_Name', 'm_Time', 'm_Gender', 'm_RaceID', 'm_Age_Lower', 'm_Age_Upper']
+    marathon_df.columns = [
+    'm_Name', 'm_Time', 'm_Gender', 'm_RaceID', 'm_Age_Lower', 'm_Age_Upper']
     marathon_df['m_Age_Lower'].fillna(0, inplace=True)
     marathon_df['m_Age_Upper'].fillna(120, inplace=True)
-    marathon_df = marathon_df.astype({'m_Age_Lower': 'int64', 'm_Age_Upper': 'int64'})
+    marathon_df = marathon_df.astype({
+        'm_Age_Lower': 'int64', 'm_Age_Upper': 'int64'})
 
+
+    print(marathon_df)
     return marathon_df
 
 def create_strava_df(raceID):
@@ -73,11 +89,13 @@ def create_strava_df(raceID):
     #strava_df = strava_df[strava_df['Shoes'].isna() == False]
 
     strava_df = strava_df.drop(columns=['Age'])
-    strava_df.columns = ['s_RaceID','s_Name', 's_Gender', 's_Shoes', 's_Time',  's_Age_Lower', 's_Age_Upper']
+    strava_df.columns = [
+    's_RaceID','s_Name', 's_Gender', 's_Shoes', 's_Time',  's_Age_Lower', 's_Age_Upper']
 
     strava_df['s_Age_Lower'].fillna(0, inplace=True)
     strava_df['s_Age_Upper'].fillna(120, inplace=True)
-    strava_df = strava_df.astype({'s_Age_Lower': 'int64', 's_Age_Upper': 'int64'})
+    strava_df = strava_df.astype(
+        {'s_Age_Lower': 'int64', 's_Age_Upper': 'int64'})
 
     return strava_df
 
@@ -85,9 +103,10 @@ def convert_to_seconds(df):
     '''
     Take in df and return it with the time column converted to seconds
     '''
-
-    df['Time'] = df.apply(lambda row: time.strptime(row.loc['Time'], '%H:%M:%S'), axis=1)
-    df['Time'] = df.apply(lambda row: row.loc['Time'].tm_hour * 3600 + row.loc['Time'].tm_min * 60 + row.loc['Time'].tm_sec, axis=1)
+    df['Time'] = df.apply(
+        lambda row: time.strptime(row.loc['Time'], '%H:%M:%S'), axis=1)
+    df['Time'] = df.apply(
+        lambda row: row.loc['Time'].tm_hour * 3600 + row.loc['Time'].tm_min * 60 + row.loc['Time'].tm_sec, axis=1)
 
     return df
 
@@ -116,12 +135,9 @@ def create_matches(raceID, acceptable_name_score=0.85):
         strava_age_lower = s_row.at['s_Age_Lower']
         strava_age_upper = s_row.at['s_Age_Upper']
 
-        # strava_age_present = isinstance(strava_age_lower, str)
-        # if strava_age_present:
-        #     strava_age_lower = int(strava_age_lower)
-        #     strava_age_upper = int(strava_age_upper)
 
-        searchable_marathon_df = marathon_df[(marathon_df['m_Time'] <= strava_time + 60) & (marathon_df['m_Time'] >= strava_time - 60) & (marathon_df['m_Gender'] == strava_gender)]
+        searchable_marathon_df = marathon_df[(
+            marathon_df['m_Time'] <= strava_time + 60) & (marathon_df['m_Time'] >= strava_time - 60) & (marathon_df['m_Gender'] == strava_gender)]
         print(s_index)
         for m_index, m_row in searchable_marathon_df.iterrows():
             marathon_age_lower = m_row.at['m_Age_Lower']
@@ -153,16 +169,21 @@ def create_matches(raceID, acceptable_name_score=0.85):
 
     return matches
 
-def go():
+
+def go(raceID):
     '''
     This function trims the data for each race, combine them, and write them
     to a sql database table
     '''
 
-    for race_ID in RACE_DICT.keys():
-        df = create_matches(race_ID, 0.85)
-        df.to_csv("race_result/master_matches.csv",index=False,mode='a')
+    df = create_matches(raceID, 0.85)
+    if not os.path.exists("race_result/master_matches.csv"):
+        df.to_csv("race_result/master_matches.csv",index=False,mode='w')
+    else:
+        df.to_csv("race_result/master_matches.csv",index=False,mode='a',header=False)
+
 
 
 if __name__ == "__main__":
-    go()
+    raceID = sys.argv[1]
+    go(raceID)
