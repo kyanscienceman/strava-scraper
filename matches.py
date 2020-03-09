@@ -133,17 +133,6 @@ def create_matches(raceID, acceptable_name_score=0.85):
 
     return matches
 
-def go():
-    '''
-    This function trims the data for each race, combine them, and write them
-    to a sql database table
-    '''
-    for race_ID in RACE_DICT.keys():
-        df = create_matches(race_ID, 0.85)
-        df = df.iloc[:,[0,8,9,10,4]]
-        df.iloc[:,6] = df.iloc[:,6].fillna(0)
-        df.iloc[:,7] = df.iloc[:,7].fillna(120)
-
 
 if __name__ == "__main__":
     go()
