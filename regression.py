@@ -10,7 +10,6 @@ import seaborn as seabornInstance
 from sklearn.model_selection import train_test_split 
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
-%matplotlib inline
 
 races = ["BS", "BS14", "BS15", "BS16", "BS17", "BS18", "BS19", \
 "NY", "NY14", "NY15", "NY16", "NY17", "NY18", "NY19", \
