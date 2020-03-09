@@ -4,7 +4,7 @@ from django import forms
 from regression import average_marathon_time
 
 def home(request):
-    return HttpResponse("Welcome to the StravaScrapers home page.")
+    return render(request, 'strava/home.html', {})
 
 class SearchForm(forms.Form):
     age = forms.IntegerField(label='age', required=False)
@@ -17,7 +17,7 @@ def results(request):
     context = {}
     if request.method == 'GET':
         if not request.GET:
-            context['error'] = True
+            context['error'] = "Sorry, you didn't conduct a search. Try again?"
         else:
             age = int(request.GET['age'])
             sex = request.GET['sex']
