@@ -8,22 +8,11 @@
     </title>
 </head>
 <body>
-    <div id="navbar">
-        {% block navbar %}
-        {% endblock %}
-    </div>
-
+    <div id="navbar">{% block navbar %}{% endblock %}</div>
+    <div id="body_title">{% block body_title %}{% endblock %}</div>
     <div id="error_msg">
-        {% if error %}
-        <p><strong>{{ error }}</strong></p>
-        {% endif %}
+        {% if error %}<p><strong>{{ error }}</strong></p>{% endif %}
     </div>
-
-    <div id="body_main">
-        {% block body_main %}
-        {{ form }}
-        {% endblock %}
-    </div>
-
+    <div id="body_main">{% block body_main %}{% endblock %}</div>
 </body>
 </html>
