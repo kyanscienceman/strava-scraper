@@ -1,15 +1,3 @@
-Go to home directory ~
+python3 strava_scraper.py "race_result/test.csv" "CH19" 1 "Kevin"
 
-vim .bashrc
-
-Scroll down to bottom of file
-
-Insert the line:
-
-export PATH=~/three-plus-one:$PATH
-
-Hit ESC
-
-Type :wq to save and exit
-
-RESTART YOUR TERMINAL
+python3 marathonguide.py 
