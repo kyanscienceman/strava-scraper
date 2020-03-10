@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn import metrics
 import statsmodels.api as sm #sudo python setup.py install
+import datetime
 #%matplotlib inline
 
 CHECKS = ["%", "vf", "next", "vapor", " fly ", "vapour", "percent"]
@@ -21,6 +22,22 @@ RACES = ["BS", "BS14", "BS15", "BS16", "BS17", "BS18", "BS19", \
 "CH", "CH14", "CH15", "CH16", "CH17", "CH18", "CH19"]
 
 SEXES = ["M", "F"]
+
+def convert_seconds_to_hours(sec):
+    '''
+    Convert seconds to hours:minutes:seconds
+
+    Input:
+        s (int): seconds
+
+    Output:
+        string hours:minutes:seconds
+    '''
+    return str(datetime.timedelta(seconds = sec))
+
+def convert_hours_to_seconds(string):
+    h,m,s = string.split(":")
+    return int(h) * 3600 + int(m) * 60 + int(s)
 
 def average_marathon_time(race=None, sex=None, age=None):
     '''
