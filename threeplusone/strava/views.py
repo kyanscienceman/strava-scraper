@@ -5,7 +5,9 @@ from regression import average_marathon_time
 
 class SearchForm(forms.Form):
     age = forms.IntegerField(label='age', required=False)
-    sex = forms.ChoiceField(label='sex', choices=[('M', 'M'), ('F', 'F')], required=False)
+    sex = forms.ChoiceField(label='sex', choices=[
+        ('', '---'), ('M', 'M'), ('F', 'F')
+    ], required=False)
 
 def home(request):
     return render(request, 'strava/home.html', {})

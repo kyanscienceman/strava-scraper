@@ -7,8 +7,8 @@
 {% block body_main %}
 <p>Runners in your cohort:</p>
 <ul>
-    {% if sex == "M" %}<li>Male{% endif %}
-    {% if sex == "F" %}<li>Female{% endif %}
+    {% if sex == 'M' %}<li>Male{% endif %}
+    {% if sex == 'F' %}<li>Female{% endif %}
     {% if age %}<li>Around {{ age }} years of age {% endif %}
     {% if not age and not sex %}<li>All runners in database{% endif %}
 </ul>

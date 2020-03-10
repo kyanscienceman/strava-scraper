@@ -68,7 +68,7 @@ FIELDNAMES = ["RaceID", "Name", "Gender", "Age", "Time1", "Time2", "Shoes"]
 CHROME_PATH = '/usr/bin/google-chrome'
 WINDOW_SIZE = "1920,1080"
 CHROME_OPTIONS = Options()  
-CHROME_OPTIONS.add_argument("--headless")  
+#CHROME_OPTIONS.add_argument("--headless")  
 CHROME_OPTIONS.add_argument("--window-size=%s" % WINDOW_SIZE)
 CHROME_OPTIONS.binary_location = CHROME_PATH
 
