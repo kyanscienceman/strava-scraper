@@ -141,7 +141,7 @@ def regressions(filename, race=None, sex=None, age=None, time=None):
         newtime = convert_seconds_to_hours(newtime)
         print("If you bought the Vaporflies, you would improve your time from", \
         "{} to {}, increasing your finish time by {} percent".format(time, newtime, \
-            percent)
+            percent))
     
     # fit = ols('y ~ C(X)', data=marathon_df).fit()
     # fit.summary()
@@ -175,8 +175,8 @@ def regressions(filename, race=None, sex=None, age=None, time=None):
 
     num_bins = 100
     fig, ax = plt.subplots(figsize=(16, 8))
-    n, bins, patches = ax.hist(y_vf, num_bins, density=1, label="VF", histtype="stepfilled")
-    n, bins, patches = ax.hist(y_no_vf, num_bins, density=1, label="No VF")
+    n, bins, patches = ax.hist(y_vf, num_bins, density=1, label="VF", histtype="barstacked")
+    n, bins, patches = ax.hist(y_no_vf, num_bins, density=1, label="No VF", histtype="barstacked")
     ax.legend(loc='upper right')
     ax.set_xlabel('Frequency of Finish Times')
     ax.set_ylabel('Probability Density')
