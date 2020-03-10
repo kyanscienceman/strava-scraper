@@ -1,0 +1,16 @@
+1. Strava scraping
+python3 strava_scraper.py race_result/test.csv CH19 1 Kevin
+
+2. MarathonGuide scraping
+python3 marathonguide.py Chicago2019
+
+3. Record linkage of the two datasets
+python3 matches.py CH19
+
+4. Regression analysis
+python3 regression.py (Not quite, need to set up the name = __main__ stuff)
+
+5. Django website
+python3 manage.py runserver
+127.0.0.1:8000/
+127.0.0.1:8000/input
