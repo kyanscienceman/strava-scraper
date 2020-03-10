@@ -175,9 +175,9 @@ def regressions(filename, race=None, sex=None, age=None, time=None):
 
     num_bins = 100
     fig, ax = plt.subplots(figsize=(16, 8))
-    n, bins, patches = ax.hist(y_vf, num_bins, density=1, label="VF", histtype="barstacked")
-    n, bins, patches = ax.hist(y_no_vf, num_bins, density=1, label="No VF", histtype="barstacked")
+    n, bins, patches = ax.hist(y_vf, num_bins, density=1, label="VF", histtype="barstacked", rwidth=0.4)
+    n, bins, patches = ax.hist(y_no_vf, num_bins, density=1, label="No VF", histtype="barstacked", rwidth=0.4)
     ax.legend(loc='upper right')
-    ax.set_xlabel('Frequency of Finish Times')
+    ax.set_xlabel('Frequency of Finish Times (in seconds)')
     ax.set_ylabel('Probability Density')
     ax.set_title(r'Histogram of Marathon Finish Times')
