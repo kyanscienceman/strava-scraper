@@ -14,7 +14,7 @@ from sklearn import metrics
 import statsmodels.api as sm #sudo python setup.py install
 #%matplotlib inline
 
-CHECKS = ["%", "vf", "fly", "next", "vapor", "vapour", "percent"]
+CHECKS = ["%", "vf", "next", "vapor", " fly ", "vapour", "percent"]
 
 RACES = ["BS", "BS14", "BS15", "BS16", "BS17", "BS18", "BS19", \
 "NY", "NY14", "NY15", "NY16", "NY17", "NY18", "NY19", \
@@ -59,21 +59,11 @@ def find_vaporfly(filename):
             and None for no shoes inputted in Strava
 
     '''
-    marathon_df = pd.read_csv(filename, sep="|")
-    marathon_df["Vaporfly"] = None
-    row_count = marathon_df.shape[0]
+    marathon_df = pd.read_csv(filename, sep=",")
+    marathon_df = marathon_df.dropna()
+    marathon_df["Vaporfly"] = marathon_df["Shoes"].apply(
+        lambda s: any([check in s.lower() for check in CHECKS]))
 
-    for i in range(row_count):
-        shoe = marathon_df.iloc[i,7]
-        vaporfly = marathon_df.iloc[i,8]
-        # shoes will temporarily be 6th column
-        # vaporfly will temporarily be 7th column
-        if pd.isnull(shoe) is False:
-            marathon_df.iloc[i,8] = False
-            for check in CHECKS:
-                if marathon_df.iloc[i,8] is False:
-                    if check in shoe.lower():
-                        marathon_df.iloc[i,8] = True
     return marathon_df
 
 
@@ -108,7 +98,7 @@ def regressions(filename, race=None, sex=None, age=None, time=None):
 
     # Need to convert time into seconds and then back to HH:MM:SS
 
-    marathon_df = marathon_df.dropna() # drop NAs and last 50 rows for outliers
+
     marathon_df["Vaporfly"].astype("category") # change to categorical variables
     X = marathon_df["Vaporfly"].values.reshape(-1,1)
     y = marathon_df["Time"].values.reshape(-1,1)
@@ -127,25 +117,28 @@ def regressions(filename, race=None, sex=None, age=None, time=None):
         "{} to {}, increasing your finish time by {} percent".format(time, newtime, \
             (1-newtime/time)*100))
     
+    '''
     X2 = sm.add_constant(X)
     est = sm.OLS(y, X2)
     est2 = est.fit()
     print(est2.summary())
-
+    '''
     predictions = reg.predict(X)
-
+    
     plt.figure(figsize=(16, 8))
     plt.scatter(
         marathon_df["Vaporfly"],
         marathon_df["Time"],
         c="black"
     )
+    
     plt.plot(
     marathon_df["Vaporfly"],
     predictions,
     c="blue",
     linewidth=2
     )
+
     plt.xlabel("Presence of Vaporfly")
     plt.ylabel("Marathon Times")
     plt.show()
