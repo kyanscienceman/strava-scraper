@@ -182,7 +182,7 @@ def regressions(race=None, sex=None, age=None, time=None):
     plt.savefig(IMAGE_PATH.format("hist.png"))
 
     #Return coefficient on Vaporfly indicator
-    return reg.coef_[0][0]
+    return datetime.timedelta(seconds = -1 * int(reg.coef_[0][0]))
 
 if __name__=="__main__":
     age = sys.argv[1]
