@@ -8,7 +8,10 @@
     display:flex;
     flex-direction:column;
     padding:0;
-    margin:0;
+    margin: -15px;
+}
+#cohort{
+    margin: -10px;
 }
 {% endblock %}
 
@@ -17,18 +20,18 @@
 {% block body_title %}<h1>Average Marathon Time</h1>{% endblock %}
 
 {% block body_main %}
-<p>Runners in your cohort:</p>
-<ul>
+<p>For runners in {{ race }}:</p>
+<ul id="cohort">
     {% if sex == 'M' %}<li>Male{% endif %}
     {% if sex == 'F' %}<li>Female{% endif %}
     {% if age %}<li>Around {{ age }} years of age {% endif %}
     {% if not age and not sex %}<li>All runners in database{% endif %}
 </ul>
-<p>that wore Vaporflies experienced a 
-    <strong>{{ regcoef|floatformat:2 }}</strong>
-second decrease in marathon time.</p>
+<p>wearing Vaporflies is correlated with a 
+    <strong>{{ regcoef }}</strong>
+decrease in marathon time.</p>
 <div id="imgbox">
-    <img src="{% static linearfit %}"/>
-    <img src="{% static hist %}"/>
+    {% if linearfit %}<img src="{% static linearfit %}"/>{% endif %}
+    {% if hist %}<img src="{% static hist %}"/>{% endif %}
 </div>
 {% endblock %}

@@ -143,7 +143,11 @@ def regressions(marathon_df=marathon_df, race=None, sex=None, age=None, time=Non
     plt.savefig(IMAGE_PATH.format("hist.png"))
 
     #Return coefficient on Vaporfly indicator
+<<<<<<< HEAD
     return beta1
+=======
+    return datetime.timedelta(seconds = -1 * int(reg.coef_[0][0]))
+>>>>>>> 13a26a1ad269fcc5e4cbefd9ef5cf9f344cb5a77
 
 def find_runner(name):
     '''
