@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import render
 from django import forms
-from regression import average_marathon_time
+from regression import regressions
 
 class SearchForm(forms.Form):
     age = forms.IntegerField(label='age', required=False)
@@ -30,7 +30,9 @@ def results(request):
         if request.GET['sex']:
             sex = request.GET['sex']
             context['sex'] = sex
-        context['avg_time'] = average_marathon_time(age=age, sex=sex)
+        context['regcoef'] = -1 * regressions(age=age, sex=sex)
+        context['linearfit'] = 'images/linearfit.png'
+        context['hist'] = 'images/hist.png'
         return render(request, 'strava/results.html', context)
 
 
