@@ -1,6 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <style>
+        #navbar{
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+        .navli{
+            display:inline;
+            color:white;
+            text-align:center;
+            padding: 10px 5px;
+        }
+        {% block style %}{% endblock %}
+    </style>
     <title>
         {% block title %}
         Overheard in Cavs locker room after Game 7: "He got me," LeBron said of Tatum's dunk over him. "That f***ing Tatum boomed me." LeBron added, "He’s so good," repeating it four times. LeBron then said he wanted to add Tatum to the list of players he works out with this summer.
@@ -8,7 +22,10 @@
     </title>
 </head>
 <body>
-    <div id="navbar">{% block navbar %}{% endblock %}</div>
+    <ul id="navbar">
+        <li class="navli"><a href="{% url 'home' %}">Home</a></li>
+        <li class="navli"><a href="{% url 'input' %}">Search</a></li>
+    </ul>
     <div id="body_title">{% block body_title %}{% endblock %}</div>
     <div id="error_msg">
         {% if error %}<p><strong>{{ error }}</strong></p>{% endif %}

@@ -1,4 +1,16 @@
 {% extends "strava/base.html" %}
+{% load staticfiles %}
+
+{% block style %}
+#imgbox{
+    width:100%;
+    height:66.67vh;
+    display:flex;
+    flex-direction:column;
+    padding:0;
+    margin:0;
+}
+{% endblock %}
 
 {% block title %}Results{% endblock %}
 
@@ -12,5 +24,11 @@
     {% if age %}<li>Around {{ age }} years of age {% endif %}
     {% if not age and not sex %}<li>All runners in database{% endif %}
 </ul>
-<p>had average marathon times of {{ avg_time }}.</p>
+<p>that wore Vaporflies experienced a 
+    <strong>{{ regcoef|floatformat:2 }}</strong>
+second decrease in marathon time.</p>
+<div id="imgbox">
+    <img src="{% static linearfit %}"/>
+    <img src="{% static hist %}"/>
+</div>
 {% endblock %}
