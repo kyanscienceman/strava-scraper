@@ -6,11 +6,11 @@ Scroll down to bottom of file
 
 Insert the line:
 
-export PATH=~/three-plus-one:$PATH
+export PATH=~/three-plus-one/scraping:$PATH
 
 Hit CTRL-X
 
-Type y and press enter a couple of times (until you exit the text editor)
+Type y and press enter
 
 RESTART YOUR TERMINAL
 
