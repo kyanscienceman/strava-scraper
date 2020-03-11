@@ -4,6 +4,7 @@ filename = "../race_result/test_ny19.csv"
 This file contains the necessary code to run the regressions and 
 visualizations.
 '''
+import sys
 import pandas as pd  
 import numpy as np  
 import matplotlib.pyplot as plt  
@@ -27,7 +28,11 @@ RACES = ["BS", "BS14", "BS15", "BS16", "BS17", "BS18", "BS19", \
 
 SEXES = ["M", "F"]
 
-def convert_seconds_to_hours(sec):
+MASTER_MATCHES = "../scraping/race_result/master_matches.csv"
+
+IMAGE_PATH = "strava/static/images/{}"
+
+def sec_to_hour(sec):
     '''
     Convert seconds to hours:minutes:seconds
 
@@ -35,50 +40,55 @@ def convert_seconds_to_hours(sec):
         s (int): seconds
 
     Output:
-        string hours:minutes:seconds
+        string in the format H:M:S
     '''
     return str(datetime.timedelta(seconds = sec))
 
-def convert_hours_to_seconds(string):
-    h,m,s = string.split(":")
+def hour_to_sec(hms_str):
+    '''
+    Convert hours:minutes:seconds to seconds
+
+    Inputs:
+        hms_str (string): string formatted like H:M:S
+
+    Returns:
+        time in seconds
+    '''
+    h,m,s = hms_str.split(":")
     return int(h) * 3600 + int(m) * 60 + int(s)
 
-def average_marathon_time(race=None, sex=None, age=None):
-    '''
-    Testing function to see if we can display information on Django site
-    Returns average marathon time of subset of runners specified
-    by the above inputs (race, sex, age)
+# def average_marathon_time(race=None, sex=None, age=None):
+#     '''
+#     Testing function to see if we can display information on Django site
+#     Returns average marathon time of subset of runners specified
+#     by the above inputs (race, sex, age)
     
-    Inputs:
-        race (string): name of race
-        sex (string): "M" or "F"
-        age (int): age of the user
-    '''
-    #Very, very temporarily just do it for NY19 lmaooo
-    marathon_df = pd.read_csv("../race_result/test_ny19.csv", delimiter='|')
-
-    if race is not None:
-        assert race in RACES
-        marathon_df = marathon_df[marathon_df["RaceID"] == race]
-    if sex is not None:
-        assert sex in SEXES
-        marathon_df = marathon_df[marathon_df["Gender"] == sex]
-    if age is not None:
-        marathon_df = marathon_df[(marathon_df["Age_Lower"] <= age) & \
-        (marathon_df["Age_Upper"] >= age)]
-
-    return marathon_df["Time"].mean()
-
+#     Inputs:
+#         race (string): name of race
+#         sex (string): "M" or "F"
+#         age (int): age of the user
+#     '''
+#     #Very, very temporarily just do it for NY19 lmaooo
+#     marathon_df = pd.read_csv("../scraping/race_result/test_ny19.csv", delimiter='|')
+#     if race is not None:
+#         assert race in RACES
+#         marathon_df = marathon_df[marathon_df["RaceID"] == race]
+#     if sex is not None:
+#         assert sex in SEXES
+#         marathon_df = marathon_df[marathon_df["Gender"] == sex]
+#     if age is not None:
+#         marathon_df = marathon_df[(marathon_df["Age_Lower"] <= age) & \
+#         (marathon_df["Age_Upper"] >= age)]
+#     return marathon_df["Time"].mean()
 
 def find_vaporfly(filename):
     '''
     Inputs:
         filename (string): name of file
     Returns:
-        dataframe (df): dataframe with Vaporfly identified in new column
-            identification as True for Vaporfly, False for non-Vaporfly shoes
-            and None for no shoes inputted in Strava
-
+        dataframe with Vaporfly identified in new column:
+        True for Vaporfly, False for non-Vaporfly shoes,
+        and None for no shoes inputted in Strava
     '''
     marathon_df = pd.read_csv(filename, sep=",")
     marathon_df = marathon_df.dropna()
@@ -88,14 +98,13 @@ def find_vaporfly(filename):
     return marathon_df
 
 
-def regressions(filename, race=None, sex=None, age=None, time=None):
+def regressions(race=None, sex=None, age=None, time=None):
     '''
-    Function that takes in a filename and various demographic
-    data points inputted by the user to spit out a coefficient and
-    estimation on how much faster Vaporflies would make you.
+    Function that takes in various demographic data points input
+    by the user to calculate a coefficient and estimate how much
+    faster Vaporflies would make them run.
 
     Inputs:
-        filename (string): name of file
         race (string): name of race (and year if you want to be
                         specific)
         sex (string): "M" for male and "F" for female
@@ -103,70 +112,57 @@ def regressions(filename, race=None, sex=None, age=None, time=None):
         time (str): time to complete a marathon, inputted as HH:MM:SS
 
     Returns:
-        plots: histogram and regression
-        regression output
+        (float) Regression coefficient
+        and saves two .png files
     '''
-    marathon_df = find_vaporfly(filename)
-
-
+    marathon_df = find_vaporfly(MASTER_MATCHES)
+    
+    param_str = ""
     if race is not None:
         assert race in RACES
         marathon_df = marathon_df[marathon_df["RaceID"] == race]
-    if sex is not None:
-        assert sex in SEXES
-        marathon_df = marathon_df[marathon_df["Gender"] == sex]
+        param_str += ", " + race
     if age is not None:
         marathon_df = marathon_df[(marathon_df["Age_Lower"] <= age) & \
         (marathon_df["Age_Upper"] >= age)]
+        param_str += ", " + "Age={}".format(age)
+    if sex is not None:
+        assert sex in SEXES
+        marathon_df = marathon_df[marathon_df["Gender"] == sex]
+        param_str += ", " + "Sex={}".format(sex)        
 
-
+    #Running the regression
     marathon_df["Vaporfly"].astype("category") # change to categorical variables
-    X = marathon_df["Vaporfly"].values.reshape(-1,1)
-    y = marathon_df["Time"].values.reshape(-1,1)
-
+    X = marathon_df["Vaporfly"].values.reshape(-1, 1)
+    y = marathon_df["Time"].values.reshape(-1, 1)
     reg = LinearRegression()
-    res = reg.fit(X, y)
-    
-    print("The linear model is: Y = {:.5} + {:.5}X".format(reg.intercept_[0], \
-     reg.coef_[0][0]))
+    reg.fit(X, y)
+    print("The linear model is: Y = {:.5} + {:.5}X"\
+        .format(reg.intercept_[0], reg.coef_[0][0]))
 
-    improvement = reg.coef_[0][0]
-
-    # fix time code Can't convert 'numpy.float64' object to str implicitly
     if time is not None:
-        time = convert_hours_to_seconds(time)
-        newtime = time + improvement
-        percent = (1-newtime/time)*100
-        time = convert_seconds_to_hours(time)
-        newtime = convert_seconds_to_hours(newtime)
-        print("If you bought the Vaporflies, you would improve your time from", \
-        "{} to {}, increasing your finish time by {} percent".format(time, newtime, \
-            percent))
+        time = hour_to_sec(time)
+        newtime = time + reg.coef_[0][0]
+        percent = (1 - newtime / time) * 100
+        time = sec_to_hour(time)
+        newtime = sec_to_hour(newtime)
+        print("If you bought the Vaporflies, you would improve your time from",\
+        "{} to {}, decreasing your finish time by {} percent".format(time, newtime, percent))
     
     # fit = ols('y ~ C(X)', data=marathon_df).fit()
     # fit.summary()
 
+    #Scatter plot and regression line
     predictions = reg.predict(X)
-    
     plt.figure(figsize=(16, 8))
-    plt.scatter(
-        marathon_df["Vaporfly"],
-        marathon_df["Time"],
-        c="black"
-    )
-    
-    plt.plot(
-    marathon_df["Vaporfly"],
-    predictions,
-    c="blue",
-    linewidth=2
-    )
-
+    plt.scatter(marathon_df["Vaporfly"], marathon_df["Time"], c="black")
+    plt.plot(marathon_df["Vaporfly"], predictions, c="blue", linewidth=2)
     plt.xlabel("Presence of Vaporfly")
     plt.ylabel("Marathon Times")
-    plt.show()
+    plt.title('Marathon Finish Time vs. Presence of Vaporfly{}'.format(param_str))
+    plt.savefig(IMAGE_PATH.format("linearfit.png"))
 
-    # print out histograms
+    #Histograms
     marathon_df_y_vf = marathon_df[marathon_df["Vaporfly"] == True]
     y_vf = marathon_df_y_vf["Time"].values.reshape(-1,1)
 
@@ -175,9 +171,21 @@ def regressions(filename, race=None, sex=None, age=None, time=None):
 
     num_bins = 100
     fig, ax = plt.subplots(figsize=(16, 8))
-    n, bins, patches = ax.hist(y_vf, num_bins, density=1, label="VF", histtype="barstacked", rwidth=0.4)
-    n, bins, patches = ax.hist(y_no_vf, num_bins, density=1, label="No VF", histtype="barstacked", rwidth=0.4)
+    n, bins, patches = ax.hist(y_vf, num_bins, density=1, label="VF",\
+        histtype="barstacked", rwidth=0.5)
+    n, bins, patches = ax.hist(y_no_vf, num_bins, density=1, label="No VF",\
+        histtype="barstacked", rwidth=0.5)
     ax.legend(loc='upper right')
     ax.set_xlabel('Frequency of Finish Times (in seconds)')
     ax.set_ylabel('Probability Density')
-    ax.set_title(r'Histogram of Marathon Finish Times')
+    ax.set_title('Histogram of Marathon Finish Times{}'.format(param_str))
+    plt.savefig(IMAGE_PATH.format("hist.png"))
+
+    #Return coefficient on Vaporfly indicator
+    return reg.coef_[0][0]
+
+if __name__=="__main__":
+    age = sys.argv[1]
+    sex = sys.argv[2]
+    time = sys.argv[3]
+    regressions(age=int(age), sex=sex, time=time)
