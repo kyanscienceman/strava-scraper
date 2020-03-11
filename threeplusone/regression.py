@@ -1,5 +1,4 @@
 '''
-filename = "../race_result/test_ny19.csv"
 ~~~3+1~~~
 This file contains the necessary code to run the regressions and 
 visualizations.
@@ -8,17 +7,8 @@ import sys
 import pandas as pd  
 import numpy as np  
 import matplotlib.pyplot as plt  
-from matplotlib import pyplot
-import seaborn as seabornInstance 
-from sklearn.model_selection import train_test_split 
 from sklearn.linear_model import LinearRegression
-from sklearn import metrics
-import statsmodels.formula.api as smf
-from statsmodels.iolib.summary2 import summary_col
-import statsmodels.api as sm
-from statsmodels.formula.api import ols
 import datetime
-#%matplotlib inline
 
 CHECKS = ["%", "vf", "next", "vapor", " fly ", "vapour", "percent"]
 
@@ -57,29 +47,6 @@ def hour_to_sec(hms_str):
     h,m,s = hms_str.split(":")
     return int(h) * 3600 + int(m) * 60 + int(s)
 
-# def average_marathon_time(race=None, sex=None, age=None):
-#     '''
-#     Testing function to see if we can display information on Django site
-#     Returns average marathon time of subset of runners specified
-#     by the above inputs (race, sex, age)
-    
-#     Inputs:
-#         race (string): name of race
-#         sex (string): "M" or "F"
-#         age (int): age of the user
-#     '''
-#     #Very, very temporarily just do it for NY19 lmaooo
-#     marathon_df = pd.read_csv("../scraping/race_result/test_ny19.csv", delimiter='|')
-#     if race is not None:
-#         assert race in RACES
-#         marathon_df = marathon_df[marathon_df["RaceID"] == race]
-#     if sex is not None:
-#         assert sex in SEXES
-#         marathon_df = marathon_df[marathon_df["Gender"] == sex]
-#     if age is not None:
-#         marathon_df = marathon_df[(marathon_df["Age_Lower"] <= age) & \
-#         (marathon_df["Age_Upper"] >= age)]
-#     return marathon_df["Time"].mean()
 
 def find_vaporfly(filename):
     '''
@@ -148,9 +115,6 @@ def regressions(race=None, sex=None, age=None, time=None):
         newtime = sec_to_hour(newtime)
         print("If you bought the Vaporflies, you would improve your time from",\
         "{} to {}, decreasing your finish time by {} percent".format(time, newtime, percent))
-    
-    # fit = ols('y ~ C(X)', data=marathon_df).fit()
-    # fit.summary()
 
     #Scatter plot and regression line
     predictions = reg.predict(X)
@@ -183,6 +147,21 @@ def regressions(race=None, sex=None, age=None, time=None):
 
     #Return coefficient on Vaporfly indicator
     return datetime.timedelta(seconds = -1 * int(reg.coef_[0][0]))
+
+def find_runner(name):
+    '''
+    Function that takes in various demographic data points given a
+    runner's name and returns how much faster they would have ran
+    if they wore Vaporflys.
+
+    Inputs:
+        name (string): name of runner
+
+    Returns:
+        (float) Regression coefficient
+        and saves two .png files
+    '''
+    marathon_df = find_vaporfly(MASTER_MATCHES)  
 
 if __name__=="__main__":
     age = sys.argv[1]
