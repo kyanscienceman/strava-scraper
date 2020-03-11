@@ -8,7 +8,7 @@ python3 marathonguide.py Chicago2019
 python3 matches.py CH19
 
 4. Regression analysis
-python3 regression.py (Not quite, need to set up the name = __main__ stuff)
+python3 regression.py CH19 M 3:00:00
 
 5. Django website
 python3 manage.py runserver
