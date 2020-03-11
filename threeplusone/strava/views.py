@@ -47,6 +47,7 @@ def results(request):
             return render(request, 'strava/input.html', context)
         age = None
         sex = None
+        race = None
         if request.GET['age']:
             age = int(request.GET['age'])
             context['age'] = age
@@ -55,8 +56,8 @@ def results(request):
             context['sex'] = sex
         if request.GET['race']:
             race = request.GET['race']
-            context['race'] = race
-        context['regcoef'] = str(regressions(age=age, sex=sex, race=race))
+            context['race'] = RACE_IDS[race]
+        context['regcoef'] = 100 * (1-regressions(age=age, sex=sex, race=race))
         context['linearfit'] = 'images/linearfit.png'
         context['hist'] = 'images/hist.png'
         return render(request, 'strava/results.html', context)

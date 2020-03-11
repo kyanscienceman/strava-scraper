@@ -20,7 +20,14 @@
 {% block body_title %}<h1>Average Marathon Time</h1>{% endblock %}
 
 {% block body_main %}
-<p>For runners in {{ race }}:</p>
+<p>For 
+    {% if race %}
+        runners in {{ race }}
+    {% else %}
+        all runners
+    {% endif %}
+    who are
+</p>
 <ul id="cohort">
     {% if sex == 'M' %}<li>Male{% endif %}
     {% if sex == 'F' %}<li>Female{% endif %}
@@ -28,8 +35,8 @@
     {% if not age and not sex %}<li>All runners in database{% endif %}
 </ul>
 <p>wearing Vaporflies is correlated with a 
-    <strong>{{ regcoef }}</strong>
-decrease in marathon time.</p>
+    <strong>{{ regcoef|floatformat:3 }}</strong>
+percent decrease in marathon time.</p>
 <div id="imgbox">
     {% if linearfit %}<img src="{% static linearfit %}"/>{% endif %}
     {% if hist %}<img src="{% static hist %}"/>{% endif %}
