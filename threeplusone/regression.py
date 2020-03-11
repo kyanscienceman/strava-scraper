@@ -22,6 +22,18 @@ MASTER_MATCHES = "../scraping/race_result/master_matches.csv"
 
 IMAGE_PATH = "strava/static/images/{}"
 
+'''
+Dataframe with Vaporfly identified in new column:
+True for Vaporfly, False for non-Vaporfly shoes,
+and None for no shoes inputted in Strava
+'''
+
+marathon_df = pd.read_csv(MASTER_MATCHES, sep=",")
+marathon_df = marathon_df.dropna()
+marathon_df["Vaporfly"] = marathon_df["Shoes"].apply(
+    lambda s: any([check in s.lower() for check in CHECKS]))
+
+
 def sec_to_hour(sec):
     '''
     Convert seconds to hours:minutes:seconds
@@ -32,7 +44,7 @@ def sec_to_hour(sec):
     Output:
         string in the format H:M:S
     '''
-    return str(datetime.timedelta(seconds = sec))
+    return str(datetime.timedelta(seconds = int(sec)))
 
 def hour_to_sec(hms_str):
     '''
@@ -47,29 +59,13 @@ def hour_to_sec(hms_str):
     h,m,s = hms_str.split(":")
     return int(h) * 3600 + int(m) * 60 + int(s)
 
-
-def find_vaporfly(filename):
-    '''
-    Inputs:
-        filename (string): name of file
-    Returns:
-        dataframe with Vaporfly identified in new column:
-        True for Vaporfly, False for non-Vaporfly shoes,
-        and None for no shoes inputted in Strava
-    '''
-    marathon_df = pd.read_csv(filename, sep=",")
-    marathon_df = marathon_df.dropna()
-    marathon_df["Vaporfly"] = marathon_df["Shoes"].apply(
-        lambda s: any([check in s.lower() for check in CHECKS]))
-
-    return marathon_df
-
-
-def regressions(race=None, sex=None, age=None, time=None):
+def regressions(marathon_df=marathon_df, race=None, sex=None, age=None, time=None):
     '''
     Function that takes in various demographic data points input
     by the user to calculate a coefficient and estimate how much
-    faster Vaporflies would make them run.
+    faster Vaporflies would make them run. We use a log 
+    transformation on time prior to our regression to account for 
+    diminishing returns on time the faster you get.
 
     Inputs:
         race (string): name of race (and year if you want to be
@@ -82,8 +78,6 @@ def regressions(race=None, sex=None, age=None, time=None):
         (float) Regression coefficient
         and saves two .png files
     '''
-    marathon_df = find_vaporfly(MASTER_MATCHES)
-    
     param_str = ""
     if race is not None:
         assert race in RACES
@@ -100,16 +94,19 @@ def regressions(race=None, sex=None, age=None, time=None):
 
     #Running the regression
     marathon_df["Vaporfly"].astype("category") # change to categorical variables
+    marathon_df["logTime"] = np.log(marathon_df["Time"]) # log transformation
     X = marathon_df["Vaporfly"].values.reshape(-1, 1)
-    y = marathon_df["Time"].values.reshape(-1, 1)
+    y = marathon_df["logTime"].values.reshape(-1, 1)
     reg = LinearRegression()
     reg.fit(X, y)
+    beta0 = np.exp(reg.intercept_[0])
+    beta1 = np.exp(reg.coef_[0][0])
     print("The linear model is: Y = {:.5} + {:.5}X"\
-        .format(reg.intercept_[0], reg.coef_[0][0]))
+        .format(beta0 , beta1))
 
     if time is not None:
         time = hour_to_sec(time)
-        newtime = time + reg.coef_[0][0]
+        newtime = time * beta1
         percent = (1 - newtime / time) * 100
         time = sec_to_hour(time)
         newtime = sec_to_hour(newtime)
@@ -119,7 +116,7 @@ def regressions(race=None, sex=None, age=None, time=None):
     #Scatter plot and regression line
     predictions = reg.predict(X)
     plt.figure(figsize=(16, 8))
-    plt.scatter(marathon_df["Vaporfly"], marathon_df["Time"], c="black")
+    plt.scatter(marathon_df["Vaporfly"], marathon_df["logTime"], c="black")
     plt.plot(marathon_df["Vaporfly"], predictions, c="blue", linewidth=2)
     plt.xlabel("Presence of Vaporfly")
     plt.ylabel("Marathon Times")
@@ -146,13 +143,14 @@ def regressions(race=None, sex=None, age=None, time=None):
     plt.savefig(IMAGE_PATH.format("hist.png"))
 
     #Return coefficient on Vaporfly indicator
-    return reg.coef_[0][0]
+    return beta1
 
 def find_runner(name):
     '''
     Function that takes in various demographic data points given a
     runner's name and returns how much faster they would have ran
-    if they wore Vaporflys.
+    if they wore Vaporflys. Note: This works even if the runner is
+    already wearing Vaporflys (e.g. it ignores prior shoe type).
 
     Inputs:
         name (string): name of runner
@@ -161,7 +159,14 @@ def find_runner(name):
         (float) Regression coefficient
         and saves two .png files
     '''
-    marathon_df = find_vaporfly(MASTER_MATCHES)  
+    runner_df = marathon_df[marathon_df["Name"] == name]
+    RaceID = runner_df.iloc[0,0]
+    time = sec_to_hour(runner_df.iloc[0,2])
+    sex = runner_df.iloc[0,3]
+    avg_age = (runner_df.iloc[0,4] + runner_df.iloc[0,5])/2
+
+    return regressions(marathon_df, race=RaceID, sex=sex, age=avg_age, time=time)
+
 
 if __name__=="__main__":
     age = sys.argv[1]
