@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import jellyfish
+import matches
 
 def find_consistent_runners(acceptable_name_score=0.85):
     '''
@@ -45,3 +46,22 @@ def find_consistent_runners(acceptable_name_score=0.85):
     consistent_runners = matches[matches_indexes]
 
     return consistent_runners
+
+def return_runners_of_multiple_races(df):
+	df = df[df.groupby("Name")["Name"].transform("size") > 1]
+	df = df.sort_values(by="Name")
+	return df
+
+
+'''
+
+def return_all_races_one_runs(name):
+	RACE_DICT = matches.RACE_DICT
+	personal_df = pd.DataFrame()
+	for official_csv,_ in RACE_DICT.values():
+		df = pd.read_csv('race_result/' + official_csv, header=None)
+		personal_df.append(df[df[0] == name])
+		print(df[0])
+		print(official_csv, personal_df)
+	return personal_df
+'''
