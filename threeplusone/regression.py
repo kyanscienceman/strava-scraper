@@ -167,11 +167,14 @@ def find_runner(name):
 
     return regressions(marathon_df, race=RaceID, sex=sex, age=avg_age, time=time)
 
-def return_runners_of_multiple_races():
-    df = marathon_df[maraton_df.groupby("Name")["Name"].transform("size") > 1]
-    df = df.sort_values(by="Name")
-    return df
+def return_runners_of_multiple_races(df):
+    '''
+    '''
 
+    df = df[df.groupby("Name")["Name"].transform("size") > 1]
+    df = df.sort_values(by=["Name", "RaceID"])
+
+    return df
 
 if __name__=="__main__":
     age = sys.argv[1]
