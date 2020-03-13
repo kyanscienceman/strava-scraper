@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt  
 from sklearn.linear_model import LinearRegression
 import datetime
+from linearmodels.panel import PanelOLS
 
 CHECKS = ["%", "vf", "next", "vapor", " fly ", "vapour", "percent"]
 
@@ -27,12 +28,10 @@ Dataframe with Vaporfly identified in new column:
 True for Vaporfly, False for non-Vaporfly shoes,
 and None for no shoes inputted in Strava
 '''
-
-marathon_df = pd.read_csv(MASTER_MATCHES, sep=",")
-marathon_df = marathon_df.dropna()
-marathon_df["Vaporfly"] = marathon_df["Shoes"].apply(
+MARATHON_DF = pd.read_csv(MASTER_MATCHES, sep=",")
+MARATHON_DF = MARATHON_DF.dropna()
+MARATHON_DF["Vaporfly"] = MARATHON_DF["Shoes"].apply(
     lambda s: any([check in s.lower() for check in CHECKS]))
-
 
 def sec_to_hour(sec):
     '''
@@ -59,7 +58,7 @@ def hour_to_sec(hms_str):
     h,m,s = hms_str.split(":")
     return int(h) * 3600 + int(m) * 60 + int(s)
 
-def regressions(marathon_df=marathon_df, race=None, sex=None, age=None, time=None):
+def regressions(marathon_df=MARATHON_DF, race=None, sex=None, age=None, time=None):
     '''
     Function that takes in various demographic data points input
     by the user to calculate a coefficient and estimate how much
@@ -159,22 +158,40 @@ def find_runner(name):
         (float) Regression coefficient
         and saves two .png files
     '''
-    runner_df = marathon_df[marathon_df["Name"] == name]
+    runner_df = MARATHON_DF[MARATHON_DF["Name"] == name]
     RaceID = runner_df.iloc[0,0]
     time = sec_to_hour(runner_df.iloc[0,2])
     sex = runner_df.iloc[0,3]
     avg_age = (runner_df.iloc[0,4] + runner_df.iloc[0,5])/2
 
-    return regressions(marathon_df, race=RaceID, sex=sex, age=avg_age, time=time)
 
-def return_runners_of_multiple_races(df):
+    return regressions(race=RaceID, sex=sex, age=avg_age, time=time)
+
+#Dataframe containing all runners who have run multiple races 
+#This will be used to run a panel data regression
+MULTIPLE_DF = MARATHON_DF[MARATHON_DF.groupby("Name")["Name"].transform("size") > 1]
+MULTIPLE_DF = MULTIPLE_DF.assign(Year=pd.to_numeric("20" + MULTIPLE_DF["RaceID"].str[2:]))
+MULTIPLE_DF = MULTIPLE_DF[["Name", "Year", "Time", "Vaporfly"]]
+MULTIPLE_DF = MULTIPLE_DF.sort_values(by=["Name", "Year"])
+rows_to_delete = []
+prev_row = [None, None, None, None]
+for ind, row in MULTIPLE_DF.iterrows():
+    if prev_row[0] == row[0] and prev_row[1] == row[1]:
+        rows_to_delete.append(ind)
+    prev_row = row
+MULTIPLE_DF = MULTIPLE_DF.drop(rows_to_delete)
+MULTIPLE_DF = MULTIPLE_DF.set_index(["Name", "Year"])
+
+def panel_regression():
     '''
+    Runs a fixed effect regression on the MULTIPLE_DF dataframe,
+    with Name as the individual index i and Year as the time index t  
+    Time_it ~ Vaporfly_it + FE_i + U_it
     '''
+    mod = PanelOLS(MULTIPLE_DF.Time, MULTIPLE_DF.Vaporfly, entity_effects=True)
+    res = mod.fit(cov_type='clustered', cluster_entity=True)
+    print(res)
 
-    df = df[df.groupby("Name")["Name"].transform("size") > 1]
-    df = df.sort_values(by=["Name", "RaceID"])
-
-    return df
 
 if __name__=="__main__":
     age = sys.argv[1]
