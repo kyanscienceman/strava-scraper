@@ -1,7 +1,8 @@
 from django.http import HttpResponse
 from django.shortcuts import render
 from django import forms
-from regression import regressions
+from regression import regressions, get_panel_regression
+import numpy as np
 
 RACE_IDS = {
     'BS19': '2019 Boston Marathon', 
@@ -35,6 +36,14 @@ class SearchForm(forms.Form):
 def home(request):
     return render(request, 'strava/home.html', {})
 
+def findings(request):
+    res = get_panel_regression()
+    regcoef = 100 * (1 - np.exp(res.params[0]))
+    return render(request, 'strava/findings.html', {
+        'nobs': res.nobs,
+        'regcoef': regcoef
+    })
+
 def input(request):
     return render(request, 'strava/input.html', {'form': SearchForm()})
 
@@ -45,6 +54,7 @@ def results(request):
             context['error'] = "Sorry, you didn't conduct a search. Try again?"
             context['form'] = SearchForm()
             return render(request, 'strava/input.html', context)
+
         age = None
         sex = None
         race = None
@@ -57,9 +67,10 @@ def results(request):
         if request.GET['race']:
             race = request.GET['race']
             context['race'] = RACE_IDS[race]
-        context['regcoef'] = 100 * (1-regressions(age=age, sex=sex, race=race))
+        context['regcoef'] = 100 * (1 - regressions(age=age, sex=sex, race=race))
         context['linearfit'] = 'images/linearfit.png'
         context['hist'] = 'images/hist.png'
+
         return render(request, 'strava/results.html', context)
 
 

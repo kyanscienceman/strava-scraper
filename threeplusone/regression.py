@@ -164,8 +164,8 @@ def find_runner(name):
     sex = runner_df.iloc[0,3]
     avg_age = (runner_df.iloc[0,4] + runner_df.iloc[0,5])/2
 
-
     return regressions(race=RaceID, sex=sex, age=avg_age, time=time)
+
 
 #Dataframe containing all runners who have run multiple races 
 #This will be used to run a panel data regression
@@ -173,6 +173,7 @@ MULTIPLE_DF = MARATHON_DF[MARATHON_DF.groupby("Name")["Name"].transform("size") 
 MULTIPLE_DF = MULTIPLE_DF.assign(Year=pd.to_numeric("20" + MULTIPLE_DF["RaceID"].str[2:]))
 MULTIPLE_DF = MULTIPLE_DF[["Name", "Year", "Time", "Vaporfly"]]
 MULTIPLE_DF = MULTIPLE_DF.sort_values(by=["Name", "Year"])
+MULTIPLE_DF["logTime"] = np.log(MULTIPLE_DF["Time"])
 rows_to_delete = []
 prev_row = [None, None, None, None]
 for ind, row in MULTIPLE_DF.iterrows():
@@ -181,16 +182,19 @@ for ind, row in MULTIPLE_DF.iterrows():
     prev_row = row
 MULTIPLE_DF = MULTIPLE_DF.drop(rows_to_delete)
 MULTIPLE_DF = MULTIPLE_DF.set_index(["Name", "Year"])
+mod = PanelOLS(MULTIPLE_DF.logTime, MULTIPLE_DF.Vaporfly, entity_effects=True)
+res = mod.fit(cov_type='clustered', cluster_entity=True)
 
-def panel_regression():
+def get_panel_regression():
     '''
-    Runs a fixed effect regression on the MULTIPLE_DF dataframe,
+    Runs a fixed effects regression on the MULTIPLE_DF dataframe,
     with Name as the individual index i and Year as the time index t  
     Time_it ~ Vaporfly_it + FE_i + U_it
+
+    This returns the same result each time: we only make it a function
+    so this data can be accessed by strava/views.py
     '''
-    mod = PanelOLS(MULTIPLE_DF.Time, MULTIPLE_DF.Vaporfly, entity_effects=True)
-    res = mod.fit(cov_type='clustered', cluster_entity=True)
-    print(res)
+    return res
 
 
 if __name__=="__main__":

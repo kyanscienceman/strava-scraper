@@ -1,0 +1,22 @@
+{% extends "strava/base.html" %}
+
+{% block title %}Primary Findings{% endblock %}
+
+{% block body_title %}<h1>Primary Findings</h1>{% endblock %}
+
+{% block body_main %}
+<p>To isolate the causal effect of wearing the Nike Vaporfly 4% on running performance is a difficult question. Many other factors that determine marathon finish time are correlated with the choice to buy Vaporflies. (For example: it is plausible that runners who choose to spend $250 on Vaporfly shoes are likely to be more commited to training for marathons.)</p>
+
+<p>Controlling at the individual level does eliminate much of the variation, although we should still not expect an individual-level regression to be perfect by any means. With that in mind, we chose to estimate the equation:</p>
+
+\[\log(time)_{it} = \beta_0+\beta_1Vaporfly_{it}+A_i+U_{it}.\]
+
+<p>The subscript \(i\) varies across individuals, and the subscript \(t\) varies across the different years in which that individual ran a marathon. \(time_{it}\) represents marathon finish time, which we log transform since the rate of marathon time improvment is not linear. \(Vaporfly_{it}\) is an indicator variable for wearing Vaporfly shoes. \(A_i\) is a fixed effects parameter to control for any variation across individuals.</p>
+
+<p>We run this regression on the subset of our database consisting of individuals who ran multiple marathons, which gave us <strong>{{ nobs }}</strong> observations. We estimate that wearing Vaporfly shoes causes a <strong>{{ regcoef|floatformat:3 }}</strong> percent decrease in marathon finish time. Again, this estimate is likely inaccurate due to selection bias in the subset of people who chose to purchase Vaporfly shoes, among other factors.</p>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+{% endblock %}

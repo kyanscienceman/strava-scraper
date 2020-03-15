@@ -24,6 +24,7 @@
 <body>
     <ul id="navbar">
         <li class="navli"><a href="{% url 'home' %}">Home</a></li>
+        <li class="navli"><a href="{% url 'findings' %}">Findings</a></li>
         <li class="navli"><a href="{% url 'input' %}">Search</a></li>
     </ul>
     <div id="body_title">{% block body_title %}{% endblock %}</div>
@@ -32,4 +33,7 @@
     </div>
     <div id="body_main">{% block body_main %}{% endblock %}</div>
 </body>
+<script>
+    {% block scripts %}{% endblock %}
+</script>
 </html>

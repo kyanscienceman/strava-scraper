@@ -2,9 +2,20 @@
 
 {% block title %}Search Within Cohort{% endblock %}
 
+{% block style %}
+#search{
+	margin: 0;
+}
+#warning{
+	font-size:70%;
+}
+{% endblock %}
+
 {% block body_title %}<h1>Search Within Cohort</h1>{% endblock %}
 
 {% block body_main %}
+<p id="search">Search for how wearing Vaporfly shoes affected runners in different cohorts.</p>
+<p id="warning">(Warning: due to small sample size, results are increasingly inaccurate for years 2016 and prior, and for ages less than 20 and greater than 50.)</p> 
 <form action="{% url 'results' %}" method="get">
     {% csrf_token %}
     <table>{{ form }}</table>
